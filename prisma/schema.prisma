@@ -1,14 +1,16 @@
 // Expats WakeelyPro — Jordan Remote Legal Services
-// SQLite schema — development/demo-ready
-// Adapted from PostgreSQL for local development
+// PostgreSQL (Supabase) schema — production-ready
+// All array fields use native String[] or Json — no JSON-as-String.
+// FIX: Removed extensions = [pgcrypto] - not needed since all IDs use cuid()
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "sqlite"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ----- Enums -----
@@ -25,6 +27,7 @@ enum Language {
 }
 
 enum MatterStatus {
+  // Legacy values (kept for backward compatibility)
   new_matter
   intake
   awaiting_documents
@@ -34,6 +37,7 @@ enum MatterStatus {
   active
   resolved
   closed
+  // Phase 1 values
   service_recommended
   remote_eligibility_check
   documents_pending
@@ -111,9 +115,10 @@ model User {
   role       Role     @default(CITIZEN)
   language   Language @default(ar)
   isVerified Boolean  @default(false)
+  // Client location context (set during guided intake)
   currentCountry String?
   currentCity    String?
-  clientStatus   String?
+  clientStatus   String? // jordanian_abroad | foreigner | dual | resident | visitor
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -135,18 +140,19 @@ model LawyerProfile {
   id              String   @id @default(cuid())
   userId          String   @unique
   barNumber       String   @unique
-  bioAr           String
-  bioEn           String
-  specialties     String   @default("[]") // JSON array
-  cities          String   @default("[]") // JSON array
-  hourlyRate      Int      @default(0)
+  bioAr           String   @db.Text
+  bioEn           String   @db.Text
+  specialties     String[] // ["real-estate", "power-of-attorney", ...]
+  cities          String[] // ["Amman", "Zarqa", ...]
+  hourlyRate      Int      @default(0) // JOD/hour
   yearsExperience Int      @default(0)
-  languages       String   @default("[\"ar\"]") // JSON array of Language
+  languages       Language[] @default([ar])
   verified        Boolean  @default(false)
   isAvailable     Boolean  @default(true)
   rating          Float    @default(0)
   totalReviews    Int      @default(0)
   avatarUrl       String?
+  // Whether this lawyer handles remote matters
   handlesRemoteMatters Boolean @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -180,8 +186,8 @@ model PracticeArea {
   slug        String   @unique
   nameAr      String
   nameEn      String
-  descriptionAr String?
-  descriptionEn String?
+  descriptionAr String? @db.Text
+  descriptionEn String? @db.Text
   parentId    String?
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
@@ -227,18 +233,18 @@ model LegalService {
   code            String   @unique
   nameAr          String
   nameEn          String
-  shortAr         String
-  shortEn         String
-  descriptionAr   String
-  descriptionEn   String
+  shortAr         String   @db.Text
+  shortEn         String   @db.Text
+  descriptionAr   String   @db.Text
+  descriptionEn   String   @db.Text
   practiceAreaId  String?
   defaultRemoteEligibility RemoteEligibility @default(partially_remote)
   platformFeeDefault      Int @default(25)
   lawyerFeeMin            Int @default(150)
   lawyerFeeMax            Int @default(800)
   governmentFeeEstimate   Int @default(0)
-  governmentFeeNoteAr     String?
-  governmentFeeNoteEn     String?
+  governmentFeeNoteAr     String? @db.Text
+  governmentFeeNoteEn     String? @db.Text
   typicalDurationDays     Int   @default(30)
   isActive        Boolean  @default(true)
   isFeatured      Boolean  @default(false)
@@ -263,17 +269,18 @@ model LegalProcedure {
   nameAr          String
   nameEn          String
   remoteEligibility RemoteEligibility @default(partially_remote)
-  remoteEligibilityReasonAr String
-  remoteEligibilityReasonEn String
+  remoteEligibilityReasonAr String   @db.Text
+  remoteEligibilityReasonEn String   @db.Text
+  // Native Json arrays of { ar: string, en: string }
   physicalPresenceSteps Json   @default("[]")
   remoteSteps           Json   @default("[]")
-  authorityAr   String?
-  authorityEn   String?
+  authorityAr   String?  @db.Text
+  authorityEn   String?  @db.Text
   estimatedDurationDays Int @default(30)
-  legalBasisAr  String?
-  legalBasisEn  String?
-  notesAr       String?
-  notesEn       String?
+  legalBasisAr  String?  @db.Text
+  legalBasisEn  String?  @db.Text
+  notesAr       String?  @db.Text
+  notesEn       String?  @db.Text
   sortOrder     Int     @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -290,11 +297,11 @@ model LegalDocumentRequirement {
   slug            String
   nameAr          String
   nameEn          String
-  descriptionAr   String?
-  descriptionEn   String?
+  descriptionAr   String?  @db.Text
+  descriptionEn   String?  @db.Text
   isRequired      Boolean  @default(true)
-  provider        String   @default("client")
-  stage           String   @default("at_intake")
+  provider        String   @default("client") // client | lawyer | authority
+  stage           String   @default("at_intake") // at_intake | at_filing | at_signing | at_notary | ongoing
   acceptsDigital  Boolean  @default(true)
   requiresOriginal   Boolean @default(false)
   requiresNotarization Boolean @default(false)
@@ -314,11 +321,11 @@ model OfficialSource {
   nameAr      String
   nameEn      String
   url         String?
-  authorityType String
+  authorityType String // ministry | court | notary | land_dept | civil_status | companies_ctrl | other
   country     String   @default("Jordan")
   region      String?
-  notesAr     String?
-  notesEn     String?
+  notesAr     String?  @db.Text
+  notesEn     String?  @db.Text
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -331,8 +338,8 @@ model LegalServiceOfficialSource {
   legalServiceId  String
   officialSourceId String
   relationType   String   @default("primary")
-  notesAr        String?
-  notesEn        String?
+  notesAr        String?  @db.Text
+  notesEn        String?  @db.Text
   createdAt      DateTime @default(now())
 
   legalService   LegalService   @relation(fields: [legalServiceId], references: [id], onDelete: Cascade)
@@ -351,10 +358,10 @@ model LegalMatter {
   clientId        String
   lawyerId        String?
   status          MatterStatus @default(new_matter)
-  facts           String?
-  aiAnalysis      String?
-  notes           String?
-  lawyerNotes     String?
+  facts           String?      @db.Text
+  aiAnalysis      String?      @db.Text
+  notes           String?      @db.Text
+  lawyerNotes     String?      @db.Text // lawyer-only, stripped from client responses
   deadline        DateTime?
   practiceAreaId  String?
   jurisdictionId  String?
@@ -366,8 +373,8 @@ model LegalMatter {
   legalServiceId  String?
   legalProcedureId String?
   remoteEligibility RemoteEligibility @default(unknown)
-  remoteEligibilityReasonAr String?
-  remoteEligibilityReasonEn String?
+  remoteEligibilityReasonAr String? @db.Text
+  remoteEligibilityReasonEn String? @db.Text
 
   clientCountry   String?
   clientCity      String?
@@ -376,9 +383,9 @@ model LegalMatter {
   platformFeeJOD  Int @default(0)
   lawyerFeeJOD    Int @default(0)
   governmentFeeJOD Int @default(0)
-  governmentFeeIncluded Boolean @default(false)
-  feeNotesAr      String?
-  feeNotesEn      String?
+  governmentFeeIncluded Boolean @default(false) // never claim included unless true
+  feeNotesAr      String? @db.Text
+  feeNotesEn      String? @db.Text
 
   progressPercent Int @default(0)
   intakeId        String? @unique
@@ -412,16 +419,17 @@ model MatterDocument {
   matterId    String
   uploadedById String
   fileName    String
-  fileUrl     String
+  fileUrl     String   // Supabase Storage URL
   fileType    String
   fileSize    Int       @default(0)
-  description String?
+  description String?  @db.Text
   requirementSlug String?
-  aiAnalysis  String?
-  reviewStatus   String?
+  aiAnalysis  String?  @db.Text
+  // Lawyer review workflow
+  reviewStatus   String?  // pending | approved | rejected | needs_resubmission
   reviewedById   String?
   reviewedAt     DateTime?
-  reviewNotes    String?
+  reviewNotes    String?  @db.Text
   createdAt    DateTime @default(now())
 
   matter     LegalMatter @relation(fields: [matterId], references: [id], onDelete: Cascade)
@@ -437,11 +445,11 @@ model MatterTask {
   matterId    String
   titleAr     String
   titleEn     String
-  descriptionAr String?
-  descriptionEn String?
+  descriptionAr String? @db.Text
+  descriptionEn String? @db.Text
   status      MatterTaskStatus @default(pending)
   sortOrder   Int      @default(0)
-  responsibleRole String @default("lawyer")
+  responsibleRole String @default("lawyer") // client | lawyer | authority | platform
   assignedLawyerId String?
   dueDate     DateTime?
   completedAt DateTime?
@@ -461,10 +469,10 @@ model MatterTimelineEvent {
   eventType   String
   titleAr     String
   titleEn     String
-  descriptionAr String?
-  descriptionEn String?
+  descriptionAr String? @db.Text
+  descriptionEn String? @db.Text
   actorId     String?
-  actorRole   String?
+  actorRole   String?  // client | lawyer | admin | system
   metadata    Json?
   createdAt   DateTime @default(now())
 
@@ -481,18 +489,18 @@ model LegalIntake {
   userId        String
   status        IntakeStatus @default(in_progress)
   language      Language     @default(ar)
-  rawText       String
+  rawText       String       @db.Text
   structured    Json?
-  pendingQuestion String?
+  pendingQuestion String?    @db.Text
   pendingQuestionId String?
-  finalSummary      String?
+  finalSummary      String?  @db.Text
   recommendedPracticeAreaId String?
   recommendedJurisdictionId String?
   recommendedLegalServiceId String?
   recommendedRemoteEligibility RemoteEligibility @default(unknown)
   recommendedDocumentSlugs Json?
   confidence        Float    @default(0)
-  safetyFlags       String   @default("[]") // JSON array
+  safetyFlags       String[]
   promptVersion   String    @default("legal_intake_v1")
   model          String?
   createdAt       DateTime  @default(now())
@@ -534,7 +542,7 @@ model Message {
   id          String   @id @default(cuid())
   conversationId String
   senderId    String
-  body        String
+  body        String   @db.Text
   attachments Json?
   readAt      DateTime?
   createdAt   DateTime @default(now())
@@ -552,7 +560,7 @@ model Notification {
   userId    String
   kind      NotificationKind
   title     String
-  body      String?
+  body      String?          @db.Text
   link      String?
   metadata  Json?
   readAt    DateTime?
@@ -575,7 +583,7 @@ model Payment {
   status      PaymentStatus @default(PENDING)
   providerRef String?
   providerName String?
-  description String?
+  description String?       @db.Text
   paidAt      DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -588,12 +596,12 @@ model Payment {
   @@index([status])
 }
 
-// ----- OTP Challenges -----
+// ----- OTP Challenges (for phone-based auth) -----
 
 model OtpChallenge {
   id        String   @id @default(cuid())
   phone     String
-  code      String
+  code      String   // 6-digit code
   attempts  Int      @default(0)
   expiresAt DateTime
   consumedAt DateTime?
