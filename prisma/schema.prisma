@@ -1,0 +1,613 @@
+// Expats WakeelyPro — Jordan Remote Legal Services
+// PostgreSQL (Supabase) schema — production-ready
+// All array fields use native String[] or Json — no JSON-as-String.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [pgcrypto]
+}
+
+// ----- Enums -----
+
+enum Role {
+  CITIZEN
+  LAWYER
+  ADMIN
+}
+
+enum Language {
+  ar
+  en
+}
+
+enum MatterStatus {
+  // Legacy values (kept for backward compatibility)
+  new_matter
+  intake
+  awaiting_documents
+  lawyer_requested
+  lawyer_assigned
+  consultation_scheduled
+  active
+  resolved
+  closed
+  // Phase 1 values
+  service_recommended
+  remote_eligibility_check
+  documents_pending
+  documents_received
+  in_progress
+  in_review
+  filing_prepared
+  filed_with_authority
+  authority_processing
+  ready_for_delivery
+  delivered
+  cancelled
+}
+
+enum RemoteEligibility {
+  fully_remote
+  partially_remote
+  in_person_required
+  unknown
+}
+
+enum MatterTaskStatus {
+  pending
+  in_progress
+  completed
+  blocked
+  skipped
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentKind {
+  platform_fee
+  lawyer_fee
+  government_fee
+  disbursement
+}
+
+enum ConversationKind {
+  lead
+  matter
+  direct
+}
+
+enum NotificationKind {
+  new_message
+  document_uploaded
+  matter_status_changed
+  task_completed
+  task_assigned
+  payment_received
+  deadline_approaching
+  lawyer_assigned
+  matched_lawyer
+}
+
+enum IntakeStatus {
+  in_progress
+  completed
+  abandoned
+}
+
+// ----- Core user model -----
+
+model User {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  email      String?  @unique
+  name       String
+  role       Role     @default(CITIZEN)
+  language   Language @default(ar)
+  isVerified Boolean  @default(false)
+  // Client location context (set during guided intake)
+  currentCountry String?
+  currentCity    String?
+  clientStatus   String? // jordanian_abroad | foreigner | dual | resident | visitor
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lawyerProfile     LawyerProfile?
+  legalMatters      LegalMatter[]     @relation("UserMatters")
+  matterDocuments   MatterDocument[]  @relation("UserMatterDocs")
+  legalIntakes      LegalIntake[]
+  conversations     Conversation[]    @relation("UserConversations")
+  sentMessages      Message[]
+  notifications     Notification[]
+  payments          Payment[]
+
+  @@index([role])
+}
+
+// ----- Lawyer profile -----
+
+model LawyerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  barNumber       String   @unique
+  bioAr           String   @db.Text
+  bioEn           String   @db.Text
+  specialties     String[] // ["real-estate", "power-of-attorney", ...]
+  cities          String[] // ["Amman", "Zarqa", ...]
+  hourlyRate      Int      @default(0) // JOD/hour
+  yearsExperience Int      @default(0)
+  languages       Language[] @default([ar])
+  verified        Boolean  @default(false)
+  isAvailable     Boolean  @default(true)
+  rating          Float    @default(0)
+  totalReviews    Int      @default(0)
+  avatarUrl       String?
+  // Whether this lawyer handles remote matters
+  handlesRemoteMatters Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedMatters  LegalMatter[]   @relation("LawyerMatters")
+  practiceAreas    LawyerPracticeArea[]
+  conversations    Conversation[]  @relation("LawyerConversations")
+
+  @@index([verified])
+  @@index([isAvailable])
+}
+
+model LawyerPracticeArea {
+  id              String   @id @default(cuid())
+  lawyerProfileId String
+  practiceAreaId  String
+  isPrimary       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  lawyerProfile LawyerProfile @relation(fields: [lawyerProfileId], references: [id], onDelete: Cascade)
+  practiceArea  PracticeArea  @relation(fields: [practiceAreaId], references: [id], onDelete: Cascade)
+
+  @@unique([lawyerProfileId, practiceAreaId])
+  @@index([lawyerProfileId])
+  @@index([practiceAreaId])
+}
+
+model PracticeArea {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  nameAr      String
+  nameEn      String
+  descriptionAr String? @db.Text
+  descriptionEn String? @db.Text
+  parentId    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  parent            PracticeArea?          @relation("PracticeAreaHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children          PracticeArea[]         @relation("PracticeAreaHierarchy")
+  matters           LegalMatter[]
+  legalServices     LegalService[]
+  lawyerProfiles    LawyerPracticeArea[]
+
+  @@index([parentId])
+  @@index([isActive])
+}
+
+model Jurisdiction {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  nameAr     String
+  nameEn     String
+  country    String
+  region     String?
+  city       String?
+  parentId   String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  parent       Jurisdiction?    @relation("JurisdictionHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Jurisdiction[]   @relation("JurisdictionHierarchy")
+  matters      LegalMatter[]
+
+  @@index([country])
+  @@index([parentId])
+}
+
+// ----- Service Catalog -----
+
+model LegalService {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  code            String   @unique
+  nameAr          String
+  nameEn          String
+  shortAr         String   @db.Text
+  shortEn         String   @db.Text
+  descriptionAr   String   @db.Text
+  descriptionEn   String   @db.Text
+  practiceAreaId  String?
+  defaultRemoteEligibility RemoteEligibility @default(partially_remote)
+  platformFeeDefault      Int @default(25)
+  lawyerFeeMin            Int @default(150)
+  lawyerFeeMax            Int @default(800)
+  governmentFeeEstimate   Int @default(0)
+  governmentFeeNoteAr     String? @db.Text
+  governmentFeeNoteEn     String? @db.Text
+  typicalDurationDays     Int   @default(30)
+  isActive        Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  practiceArea       PracticeArea?               @relation(fields: [practiceAreaId], references: [id], onDelete: SetNull)
+  procedures         LegalProcedure[]
+  documentRequirements LegalDocumentRequirement[]
+  matters            LegalMatter[]
+  officialSources    LegalServiceOfficialSource[]
+
+  @@index([isActive])
+  @@index([practiceAreaId])
+}
+
+model LegalProcedure {
+  id              String   @id @default(cuid())
+  legalServiceId  String
+  slug            String   @unique
+  nameAr          String
+  nameEn          String
+  remoteEligibility RemoteEligibility @default(partially_remote)
+  remoteEligibilityReasonAr String   @db.Text
+  remoteEligibilityReasonEn String   @db.Text
+  // Native Json arrays of { ar: string, en: string }
+  physicalPresenceSteps Json   @default("[]")
+  remoteSteps           Json   @default("[]")
+  authorityAr   String?  @db.Text
+  authorityEn   String?  @db.Text
+  estimatedDurationDays Int @default(30)
+  legalBasisAr  String?  @db.Text
+  legalBasisEn  String?  @db.Text
+  notesAr       String?  @db.Text
+  notesEn       String?  @db.Text
+  sortOrder     Int     @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  legalService LegalService @relation(fields: [legalServiceId], references: [id], onDelete: Cascade)
+  matters      LegalMatter[]
+
+  @@index([legalServiceId])
+}
+
+model LegalDocumentRequirement {
+  id              String   @id @default(cuid())
+  legalServiceId  String
+  slug            String
+  nameAr          String
+  nameEn          String
+  descriptionAr   String?  @db.Text
+  descriptionEn   String?  @db.Text
+  isRequired      Boolean  @default(true)
+  provider        String   @default("client") // client | lawyer | authority
+  stage           String   @default("at_intake") // at_intake | at_filing | at_signing | at_notary | ongoing
+  acceptsDigital  Boolean  @default(true)
+  requiresOriginal   Boolean @default(false)
+  requiresNotarization Boolean @default(false)
+  requiresApostille  Boolean @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  legalService LegalService @relation(fields: [legalServiceId], references: [id], onDelete: Cascade)
+
+  @@unique([legalServiceId, slug])
+  @@index([legalServiceId])
+}
+
+model OfficialSource {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  nameAr      String
+  nameEn      String
+  url         String?
+  authorityType String // ministry | court | notary | land_dept | civil_status | companies_ctrl | other
+  country     String   @default("Jordan")
+  region      String?
+  notesAr     String?  @db.Text
+  notesEn     String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  legalServices LegalServiceOfficialSource[]
+}
+
+model LegalServiceOfficialSource {
+  id              String   @id @default(cuid())
+  legalServiceId  String
+  officialSourceId String
+  relationType   String   @default("primary")
+  notesAr        String?  @db.Text
+  notesEn        String?  @db.Text
+  createdAt      DateTime @default(now())
+
+  legalService   LegalService   @relation(fields: [legalServiceId], references: [id], onDelete: Cascade)
+  officialSource OfficialSource @relation(fields: [officialSourceId], references: [id], onDelete: Cascade)
+
+  @@unique([legalServiceId, officialSourceId])
+  @@index([legalServiceId])
+  @@index([officialSourceId])
+}
+
+// ----- Legal Matter -----
+
+model LegalMatter {
+  id              String       @id @default(cuid())
+  title           String
+  clientId        String
+  lawyerId        String?
+  status          MatterStatus @default(new_matter)
+  facts           String?      @db.Text
+  aiAnalysis      String?      @db.Text
+  notes           String?      @db.Text
+  lawyerNotes     String?      @db.Text // lawyer-only, stripped from client responses
+  deadline        DateTime?
+  practiceAreaId  String?
+  jurisdictionId  String?
+  country         String?
+  region          String?
+  city            String?
+  urgency         String?
+
+  legalServiceId  String?
+  legalProcedureId String?
+  remoteEligibility RemoteEligibility @default(unknown)
+  remoteEligibilityReasonAr String? @db.Text
+  remoteEligibilityReasonEn String? @db.Text
+
+  clientCountry   String?
+  clientCity      String?
+  clientStatus    String?
+
+  platformFeeJOD  Int @default(0)
+  lawyerFeeJOD    Int @default(0)
+  governmentFeeJOD Int @default(0)
+  governmentFeeIncluded Boolean @default(false) // never claim included unless true
+  feeNotesAr      String? @db.Text
+  feeNotesEn      String? @db.Text
+
+  progressPercent Int @default(0)
+  intakeId        String? @unique
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  closedAt         DateTime?
+
+  client       User           @relation("UserMatters", fields: [clientId], references: [id], onDelete: Cascade)
+  lawyer       LawyerProfile?  @relation("LawyerMatters", fields: [lawyerId], references: [id], onDelete: SetNull)
+  practiceArea PracticeArea?  @relation(fields: [practiceAreaId], references: [id], onDelete: SetNull)
+  jurisdiction Jurisdiction?  @relation(fields: [jurisdictionId], references: [id], onDelete: SetNull)
+  legalService LegalService?  @relation(fields: [legalServiceId], references: [id], onDelete: SetNull)
+  legalProcedure LegalProcedure? @relation(fields: [legalProcedureId], references: [id], onDelete: SetNull)
+  documents    MatterDocument[]
+  tasks        MatterTask[]
+  timelineEvents MatterTimelineEvent[]
+  conversations Conversation[]
+  payments     Payment[]
+  intake       LegalIntake?
+
+  @@index([clientId])
+  @@index([lawyerId])
+  @@index([status])
+  @@index([legalServiceId])
+  @@index([createdAt])
+}
+
+model MatterDocument {
+  id          String   @id @default(cuid())
+  matterId    String
+  uploadedById String
+  fileName    String
+  fileUrl     String   // Supabase Storage URL
+  fileType    String
+  fileSize    Int       @default(0)
+  description String?  @db.Text
+  requirementSlug String?
+  aiAnalysis  String?  @db.Text
+  // Lawyer review workflow
+  reviewStatus   String?  // pending | approved | rejected | needs_resubmission
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewNotes    String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  matter     LegalMatter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  uploadedBy User        @relation("UserMatterDocs", fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
+  @@index([requirementSlug])
+  @@index([reviewStatus])
+}
+
+model MatterTask {
+  id          String   @id @default(cuid())
+  matterId    String
+  titleAr     String
+  titleEn     String
+  descriptionAr String?  @db.Text
+  descriptionEn String?  @db.Text
+  status      MatterTaskStatus @default(pending)
+  sortOrder   Int      @default(0)
+  responsibleRole String @default("lawyer") // client | lawyer | authority | platform
+  assignedLawyerId String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  requiresPhysicalPresence Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  matter LegalMatter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
+  @@index([status])
+}
+
+model MatterTimelineEvent {
+  id          String   @id @default(cuid())
+  matterId    String
+  eventType   String
+  titleAr     String
+  titleEn     String
+  descriptionAr String?  @db.Text
+  descriptionEn String?  @db.Text
+  actorId     String?
+  actorRole   String?  // client | lawyer | admin | system
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  matter LegalMatter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
+  @@index([createdAt])
+}
+
+// ----- Legal Intake -----
+
+model LegalIntake {
+  id            String       @id @default(cuid())
+  userId        String
+  status        IntakeStatus @default(in_progress)
+  language      Language     @default(ar)
+  rawText       String       @db.Text
+  structured    Json?
+  pendingQuestion String?    @db.Text
+  pendingQuestionId String?
+  finalSummary      String?  @db.Text
+  recommendedPracticeAreaId String?
+  recommendedJurisdictionId String?
+  recommendedLegalServiceId String?
+  recommendedRemoteEligibility RemoteEligibility @default(unknown)
+  recommendedDocumentSlugs Json?
+  confidence        Float    @default(0)
+  safetyFlags       String[]
+  promptVersion   String    @default("legal_intake_v1")
+  model          String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  completedAt     DateTime?
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matter         LegalMatter?    @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  matterId   String?  @unique
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ----- Messaging -----
+
+model Conversation {
+  id          String           @id @default(cuid())
+  kind        ConversationKind @default(direct)
+  clientUserId String
+  lawyerId     String?
+  matterId     String?
+  lastMessageAt DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  clientUser User           @relation("UserConversations", fields: [clientUserId], references: [id], onDelete: Cascade)
+  lawyer     LawyerProfile?  @relation("LawyerConversations", fields: [lawyerId], references: [id], onDelete: SetNull)
+  matter     LegalMatter?    @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  messages   Message[]
+
+  @@index([clientUserId])
+  @@index([lawyerId])
+  @@index([matterId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  conversationId String
+  senderId    String
+  body        String   @db.Text
+  attachments Json?
+  readAt      DateTime?
+  createdAt    DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// ----- Notifications -----
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  kind      NotificationKind
+  title     String
+  body      String?          @db.Text
+  link      String?
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+// ----- Payments -----
+
+model Payment {
+  id          String        @id @default(cuid())
+  userId      String
+  matterId    String?
+  amountJOD   Int
+  kind        PaymentKind   @default(platform_fee)
+  status      PaymentStatus @default(PENDING)
+  providerRef String?
+  providerName String?
+  description String?       @db.Text
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matter LegalMatter? @relation(fields: [matterId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([matterId])
+  @@index([status])
+}
+
+// ----- OTP Challenges (for phone-based auth) -----
+
+model OtpChallenge {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String   // 6-digit code
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([expiresAt])
+}
