@@ -46,3 +46,7 @@ Thumbs.db
 coverage/
 .vercel
 tsconfig.tsbuildinfo
+
+# Build artifacts
+bun.lock
+next-env.d.ts
