@@ -1,453 +1,299 @@
+/* Style reminder: Route Atlas — Arabic-first bilingual service design, paper white, charcoal, Wakeely Route Green, numbered route spine. */
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useLocale } from "@/lib/locale-provider";
-import { useSession } from "@/lib/session-provider";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { useEffect, useRef, useState } from "react";
 import {
-  Scale,
-  Sparkles,
-  ArrowRight,
+  ArrowDownLeft,
+  ArrowDownRight,
   ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  FileCheck2,
   FileText,
-  Globe,
-  ShieldCheck,
+  Globe2,
   Languages,
-  Building2,
-  Gavel,
   Landmark,
-  Users,
-  Clock,
-  CheckCircle2,
-  KeyRound,
-  ScrollText,
-  Briefcase,
+  Menu,
+  MessageCircle,
+  Moon,
+  Scale,
+  ShieldCheck,
+  Sparkles,
+  Sun,
+  UserRound,
+  X,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-type Service = {
-  id: string;
-  slug: string;
-  nameAr: string;
-  nameEn: string;
-  shortAr: string;
-  shortEn: string;
-  remoteEligibility: "fully_remote" | "partially_remote" | "in_person_required" | "unknown";
-  platformFeeDefault: number;
-  lawyerFeeMin: number;
-  lawyerFeeMax: number;
-  typicalDurationDays: number;
-  isFeatured: boolean;
-};
+const markAsset = "/manus-storage/wakeely-mark.svg";
+const heroAsset = "/manus-storage/wakeely-hero-editorial.svg";
+const servicesAsset = "/manus-storage/wakeely-services.svg";
+const bridgeAsset = "/manus-storage/wakeely-bridge.svg";
+const routeAsset = "/manus-storage/wakeely-route.svg";
+const sitePath = (path: string) => path;
 
-const REMOTE_LABEL: Record<string, { ar: string; en: string; tone: "success" | "warning" | "danger" | "secondary" }> = {
-  fully_remote: { ar: "عن بُعد بالكامل", en: "Fully remote", tone: "success" },
-  partially_remote: { ar: "جزئياً عن بُعد", en: "Partially remote", tone: "warning" },
-  in_person_required: { ar: "يتطلب حضوراً", en: "In-person required", tone: "danger" },
-  unknown: { ar: "غير محدد", en: "Unknown", tone: "secondary" },
-};
+type Language = "ar" | "en";
 
-export default function HomePage() {
-  const { locale } = useLocale();
-  const { user } = useSession();
-  const ar = locale === "ar";
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
+const text = {
+  ar: {
+    brand: "خدمات المغتربين القانونية",
+    englishBrand: "Jordan Remote Legal Services",
+    navHome: "الرئيسية",
+    navServices: "الخدمات",
+    navMatters: "قضاياي",
+    signIn: "تسجيل الدخول",
+    switchTo: "EN",
+    phase: "إصدار Phase 1 — تجريبي",
+    themeDark: "الوضع الداكن",
+    themeLight: "الوضع الفاتح",
+    heroTitle: <>أنجز معاملاتك القانونية في <span>الأردن</span> من أي مكان في العالم</>,
+    heroBody: "توجيه ذكي ثلاثي الخطوات: أين أنت؟ ما حالتك؟ ماذا تحتاج؟ — ثم قائمة مستندات، حكم على أهلية الإنجاز عن بُعد، مطابقة مع محامٍ موثوق، وملف قضية متكامل مع المهام والجدول الزمني والرسائل والمدفوعات.",
+    primary: "أحتاج لإنجاز معاملة في الأردن",
+    browse: "تصفح الخدمات",
+    demoHint: "تسجيل الدخول عبر زر «تسجيل الدخول» بأحد الحسابات التجريبية في الأعلى.",
+    ai: "مدعوم بالذكاء الاصطناعي + محامين مرخصين",
+    bilingual: "ثنائي اللغة (عربي/إنجليزي)",
+    catalog: "لا اختراع للخدمات — كتالوج صريح",
+    routeKicker: "التدفق الكامل",
+    routeSub: "من التوجيه إلى التسليم",
+    where: "أين أنت؟",
+    situation: "ما حالتك؟",
+    need: "ماذا تحتاج؟",
+    recommendation: "توصية",
+    caseFile: "ملف قضية",
+    routeHints: [
+      "حدد البلد الذي تقيم فيه حتى نعرض لك مساراً يناسب موقعك الحالي.",
+      "صف وضعك القانوني باختصار لنفهم نقطة البداية والقيود المحتملة.",
+      "اختر المعاملة التي تريد إنجازها في الأردن من الكتالوج الموثق.",
+      "تحصل على توصية واضحة، وقائمة مستندات، وحكم صريح على الأهلية عن بُعد.",
+      "بعد التأكيد، يجتمع كل شيء في ملف قضية قابل للمتابعة مع محامٍ مرخص.",
+    ],
+    howKicker: "كيف يعمل",
+    howTitle: "ثلاث خطوات بسيطة",
+    howBody: "من تحديد احتياجك إلى إنشاء قضية متابعة متكاملة — خلال دقائق.",
+    step1: "التوجيه",
+    step1Body: "أين أنت؟ ما حالتك؟ ماذا تحتاج إنجازه في الأردن؟",
+    step2: "توصية وتحليل",
+    step2Body: "خدمة موصى بها من الكتالوج، قائمة مستندات، وحكم على أهلية الإنجاز عن بُعد.",
+    step3: "ملف قضية متكامل",
+    step3Body: "إنشاء قضية، رفع المستندات، متابعة المهام والجدول الزمني، التواصل والدفع.",
+    servicesKicker: "كتالوج الخدمات",
+    servicesTitle: "خدمات قانونية أردنية عن بُعد",
+    servicesBody: "كل خدمة لها إجراء رسمي، قائمة مستندات، ومصادر حكومية واضحة. الذكاء الاصطناعي لا يخترع خدمات خارج هذا الكتالوج.",
+    viewAll: "عرض الكل",
+    whyKicker: "لماذا نحن",
+    whyTitle: "ذكاء اصطناعي + محامون + جهات رسمية",
+    whyBody: "الذكاء الاصطناعي للتنقّي والتوجيه فقط — العمل الحقيقي يقوم به محامون مرخصون وجهات حكومية أردنية.",
+    noInvent: "لا اختراع خدمات",
+    noInventBody: "الذكاء الاصطناعي يختار فقط من كتالوج الخدمات الموثقة.",
+    eligibility: "حكم صريح على الأهلية عن بُعد",
+    eligibilityBody: "لا يدّعي إنجازاً كاملاً عن بُعد ما لم يقل الإجراء ذلك.",
+    fees: "شفافية الرسوم",
+    feesBody: "رسوم منصة + رسوم محامٍ + رسوم حكومية — مفصولة، لا ادعاء بالشمول.",
+    language: "ثنائي اللغة",
+    languageBody: "عربي وإنجليزي، RTL وLTR، في كل مكان.",
+    bridgeKicker: "من أي مكان في العالم",
+    bridgeTitle: "مسار واضح لمعاملة تبدأ من بعيد.",
+    bridgeBody: "ابدأ من حيث أنت، ثم دعنا نوضح لك ما تحتاجه الخطوة التالية في الأردن.",
+    start: "ابدأ التوجيه",
+    readyTitle: "جاهز لبدء معاملتك؟",
+    readyBody: "ابدأ الآن بثلاث خطوات — لا التزام قبل إنشاء القضية.",
+    footerTitle: "خدمات المغتربين القانونية",
+    footerBody: "Jordan Remote Legal Services — Phase 1 MVP · Bilingual (AR/EN)",
+    privacyPolicy: "سياسة الخصوصية",
+    englishDisclaimer: "لأغراض العرض التوضيحي فقط — لا يتم تقديم استشارة قانونية حقيقية. الذكاء الاصطناعي للتنقّي فقط. جميع الأعمال القانونية يقوم بها محامون أردنيون مرخصون وجهات أردنية رسمية. هذه المنصة لا تقدم توقيعات إلكترونية ولا خدمات توثيق إلكتروني. رسوم الجهات الحكومية تُدفع مباشرة للجهة المعنية.",
+  },
+  en: {
+    brand: "Jordan Remote Legal Services",
+    englishBrand: "Jordan Remote Legal Services",
+    navHome: "Home",
+    navServices: "Services",
+    navMatters: "My Matters",
+    signIn: "Sign in",
+    switchTo: "العربية",
+    phase: "Phase 1 — Demo",
+    themeDark: "Dark mode",
+    themeLight: "Light mode",
+    heroTitle: <>Complete your legal transactions in <span>Jordan</span> from anywhere in the world</>,
+    heroBody: "A smart three-step orientation: where are you, what is your situation, and what do you need? Then receive a document list, a clear view of remote eligibility, a trusted lawyer match, and a complete case file with tasks, timelines, messages, and payments.",
+    primary: "I need to complete a transaction in Jordan",
+    browse: "Browse services",
+    demoHint: "Sign in using one of the demo accounts available through the sign-in button above.",
+    ai: "AI navigation + licensed lawyers",
+    bilingual: "Bilingual (Arabic / English)",
+    catalog: "No invented services — explicit catalog",
+    routeKicker: "The full flow",
+    routeSub: "From orientation to delivery",
+    where: "Where are you?",
+    situation: "What is your situation?",
+    need: "What do you need?",
+    recommendation: "Recommendation",
+    caseFile: "Case file",
+    routeHints: [
+      "Tell us where you currently live so the route reflects your location.",
+      "Describe your situation briefly so we can identify the right starting point.",
+      "Choose the Jordanian transaction you need from the documented catalog.",
+      "Receive a clear recommendation, document list, and remote-eligibility view.",
+      "Once confirmed, everything lives in a traceable case file with a licensed lawyer.",
+    ],
+    howKicker: "How it works",
+    howTitle: "Three simple steps",
+    howBody: "From identifying your need to creating a complete case to follow — in minutes.",
+    step1: "Orientation",
+    step1Body: "Where are you? What is your situation? What do you need to complete in Jordan?",
+    step2: "Recommendation & analysis",
+    step2Body: "A catalog-backed recommendation, document list, and a clear view of remote eligibility.",
+    step3: "Complete case file",
+    step3Body: "Create a case, upload documents, track tasks and timeline, communicate, and pay.",
+    servicesKicker: "Service catalog",
+    servicesTitle: "Jordanian legal services, remotely",
+    servicesBody: "Every service has a formal procedure, document list, and clear government sources. AI does not invent services outside this catalog.",
+    viewAll: "View all",
+    whyKicker: "Why us",
+    whyTitle: "AI + lawyers + official authorities",
+    whyBody: "AI is for navigation only — the real work is performed by licensed lawyers and official Jordanian authorities.",
+    noInvent: "No invented services",
+    noInventBody: "AI selects only from the documented service catalog.",
+    eligibility: "Clear remote eligibility",
+    eligibilityBody: "No claim of full remote completion unless the procedure says so.",
+    fees: "Transparent fees",
+    feesBody: "Platform fee + lawyer fee + government fee — separated, never implied as inclusive.",
+    language: "Bilingual",
+    languageBody: "Arabic and English, RTL and LTR, throughout.",
+    bridgeKicker: "From anywhere in the world",
+    bridgeTitle: "A clear route for a matter that starts far away.",
+    bridgeBody: "Start where you are, then let us make the next step in Jordan easier to see.",
+    start: "Start orientation",
+    readyTitle: "Ready to start your transaction?",
+    readyBody: "Begin in three steps — no commitment before a case is created.",
+    footerTitle: "Jordan Remote Legal Services",
+    footerBody: "Jordan Remote Legal Services — Phase 1 MVP · Bilingual (AR/EN)",
+    privacyPolicy: "Privacy policy",
+    englishDisclaimer: "For demonstration only — no real legal advice is provided. AI is for navigation only. All legal work is performed by licensed Jordanian lawyers and official Jordanian authorities. This platform does not provide electronic signatures or e-notary services. Government fees are always paid directly to the relevant authority.",
+  },
+} as const;
+
+const stepIcons = [Globe2, UserRound, Scale, Sparkles, FileCheck2];
+
+function Brand({ language }: { language: Language }) {
+  const t = text[language];
+  return (
+    <a className="brand" href="#top" aria-label={t.brand}>
+      <span className="brand-mark"><img src={markAsset} alt="" /></span>
+      <span className="brand-copy"><strong>{t.brand}</strong><small>{t.englishBrand}</small></span>
+    </a>
+  );
+}
+
+export default function Home({ initialLanguage }: { initialLanguage?: Language }) {
+  const [language, setLanguage] = useState<Language>(() => {
+    if (initialLanguage) return initialLanguage;
+    if (typeof window === "undefined") return "ar";
+    return window.localStorage.getItem("wakeely-language") === "en" ? "en" : "ar";
+  });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const toggleTheme = () => {
+    setTheme((current) => {
+      const next = current === "dark" ? "light" : "dark";
+      document.documentElement.classList.toggle("dark", next === "dark");
+      return next;
+    });
+  };
+  const pageRef = useRef<HTMLDivElement>(null);
+  const isArabic = language === "ar";
+  const t = text[language];
+  const DirectionArrow = isArabic ? ArrowLeft : ArrowRight;
+  const closeMenu = () => setMenuOpen(false);
+  const openIntake = () => window.location.assign("/intake");
+  const changeLanguage = (nextLanguage: Language) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("wakeely-language", nextLanguage);
+    setLanguage(nextLanguage);
+  };
+
+  useEffect(() => { window.localStorage.setItem("wakeely-language", language); }, [language]);
 
   useEffect(() => {
-    fetch("/api/legal/services")
-      .then((r) => r.json())
-      .then((d) => setServices(d.services ?? []))
-      .catch(() => setServices([]))
-      .finally(() => setLoading(false));
+    const root = pageRef.current;
+    if (!root) return;
+    const revealItems = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
+    if (typeof IntersectionObserver === "undefined") {
+      revealItems.forEach((item) => item.classList.add("is-visible"));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => entries.forEach((entry) => { if (entry.isIntersecting) { entry.target.classList.add("is-visible"); observer.unobserve(entry.target); } }), { threshold: 0.12, rootMargin: "0px 0px -40px" });
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
   }, []);
 
   return (
-    <div className="flex flex-col">
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-primary/5 via-background to-background">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="grid items-center gap-12 md:grid-cols-2">
-            <div>
-              <Badge variant="secondary" className="mb-4 gap-1.5">
-                <Sparkles className="h-3 w-3" />
-                {ar ? "إصدار Phase 1 — تجريبي" : "Phase 1 MVP — Demo"}
-              </Badge>
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-                {ar ? (
-                  <>
-                    أنجز معاملاتك القانونية في{" "}
-                    <span className="bg-gradient-to-l from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
-                      الأردن
-                    </span>{" "}
-                    من أي مكان في العالم
-                  </>
-                ) : (
-                  <>
-                    Get your legal matters done in{" "}
-                    <span className="bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
-                      Jordan
-                    </span>{" "}
-                    from anywhere in the world
-                  </>
-                )}
-              </h1>
-              <p className="mt-5 max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">
-                {ar
-                  ? "توجيه ذكي ثلاثي الخطوات: أين أنت؟ ما حالتك؟ ماذا تحتاج؟ — ثم قائمة مستندات، حكم على أهلية الإنجاز عن بُعد، مطابقة مع محامٍ موثوق، وملف قضية متكامل مع المهام والجدول الزمني والرسائل والمدفوعات."
-                  : "Three-step smart intake: Where are you? What is your status? What do you need? — then a document checklist, remote-eligibility verdict, a matched verified lawyer, and a full matter file with tasks, timeline, messaging and payments."}
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link href="/intake">
-                  <Button size="lg" className="gap-2">
-                    <KeyRound className="h-4 w-4" />
-                    {ar ? "أحتاج لإنجاز معاملة في الأردن" : "I need to handle something in Jordan"}
-                    {ar ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
-                  </Button>
-                </Link>
-                <Link href="/services">
-                  <Button size="lg" variant="outline">
-                    {ar ? "تصفح الخدمات" : "Browse services"}
-                  </Button>
-                </Link>
+    <div ref={pageRef} className={`wakeely-page ${isArabic ? "is-arabic" : "is-english"}`} dir={isArabic ? "rtl" : "ltr"} lang={language} id="top">
+      <div className="phase-bar"><span className="phase-dot" /> {t.phase}<span className="phase-separator" /> <span>{t.bilingual}</span></div>
+
+
+
+      <main>
+        <section className="wakeely-hero">
+          <div className="page-width hero-layout">
+            <div className="hero-copy">
+              <div className="hero-phase"><span className="hero-phase-line" /> <span>{t.phase}</span><span className="hero-language-label">Jordan Remote Legal Services / AR ↔ EN</span></div>
+              <h1>{t.heroTitle}</h1>
+              <p className="hero-description">{t.heroBody}</p>
+              <div className="hero-actions"><button className="primary-action" type="button" onClick={openIntake}>{t.primary}<DirectionArrow size={17} /></button><a className="secondary-action" href={sitePath("/services")}>{t.browse}<ArrowDownRight size={16} /></a></div>
+              <p className="demo-hint">{t.demoHint}</p>
+              <div className="proof-row"><span><Sparkles size={15} /> {t.ai}</span><span><Languages size={15} /> {t.bilingual}</span><span><ShieldCheck size={15} /> {t.catalog}</span></div>
+            </div>
+            <div className="flow-card hero-flow-card">
+              <div className="flow-card-heading"><div><span>{t.routeKicker}</span><strong>{t.routeSub}</strong></div><span className="flow-code">01 / 05</span></div>
+              <div className="hero-flow-media"><img src={heroAsset} alt={isArabic ? "ملف معاملة قانونية أردنية" : "A Jordanian legal transaction file"} /><span>CASE FILE / JORDAN / 01</span></div>
+              <div className="flow-route">
+                {[t.where, t.situation, t.need, t.recommendation, t.caseFile].map((label, index) => {
+                  const Icon = stepIcons[index];
+                  return <Tooltip key={label}><TooltipTrigger asChild><div className={`flow-node ${index === 0 ? "is-active" : ""}`} tabIndex={0}><span className="flow-node-line" /><span className="flow-node-icon"><Icon size={16} /></span><span className="flow-node-label">{label}</span><DirectionArrow size={15} /></div></TooltipTrigger><TooltipContent side={isArabic ? "left" : "right"} className="route-tooltip" dir={isArabic ? "rtl" : "ltr"}>{t.routeHints[index]}</TooltipContent></Tooltip>;
+                })}
               </div>
-              {!user && (
-                <p className="mt-4 text-xs text-muted-foreground">
-                  {ar
-                    ? "تسجيل الدخول عبر زر «تسجيل الدخول» بأحد الحسابات التجريبية في الأعلى."
-                    : "Sign in via the «Sign in» button at the top using one of the demo accounts."}
-                </p>
-              )}
-              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                  {ar ? "مدعوم بالذكاء الاصطناعي + محامين مرخصين" : "AI-assisted + licensed lawyers"}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Languages className="h-3.5 w-3.5 text-emerald-600" />
-                  {ar ? "ثنائي اللغة (عربي/إنجليزي)" : "Bilingual (AR/EN)"}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                  {ar ? "لا اختراع للخدمات — كتالوج صريح" : "No invented services — strict catalog"}
-                </div>
-              </div>
-            </div>
-
-            <div className="relative">
-              <HeroFlowDiagram ar={ar} />
+              <div className="flow-card-foot"><span>WAKEELY / ROUTE 01</span><span><span className="green-pulse" /> {isArabic ? "مفتوح للتوجيه" : "Open for orientation"}</span></div>
             </div>
           </div>
-        </div>
-      </section>
+          <div className="hero-caption page-width"><span>JORDAN / REMOTE LEGAL SERVICES</span><span>01 — THE ROUTE</span></div>
+        </section>
 
-      {/* How it works */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="mx-auto mb-10 max-w-2xl text-center">
-          <Badge variant="secondary">{ar ? "كيف يعمل" : "How it works"}</Badge>
-          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
-            {ar ? "ثلاث خطوات بسيطة" : "Three simple steps"}
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            {ar
-              ? "من تحديد احتياجك إلى إنشاء قضية متابعة متكاملة — خلال دقائق."
-              : "From defining your need to a full tracked matter — in minutes."}
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          <StepCard
-            icon={<Globe className="h-5 w-5" />}
-            step={1}
-            ar={ar}
-            titleAr="التوجيه"
-            titleEn="Guided intake"
-            descAr="أين أنت؟ ما حالتك؟ ماذا تحتاج إنجازه في الأردن؟"
-            descEn="Where are you? What is your status? What do you need done in Jordan?"
-          />
-          <StepCard
-            icon={<Sparkles className="h-5 w-5" />}
-            step={2}
-            ar={ar}
-            titleAr="توصية وتحليل"
-            titleEn="Recommendation & analysis"
-            descAr="خدمة موصى بها من الكتالوج، قائمة مستندات، وحكم على أهلية الإنجاز عن بُعد."
-            descEn="A recommended service from the catalog, document checklist, and remote-eligibility verdict."
-          />
-          <StepCard
-            icon={<FileText className="h-5 w-5" />}
-            step={3}
-            ar={ar}
-            titleAr="ملف قضية متكامل"
-            titleEn="Full matter file"
-            descAr="إنشاء قضية، رفع المستندات، متابعة المهام والجدول الزمني، التواصل والدفع."
-            descEn="Create a matter, upload documents, track tasks & timeline, communicate and pay."
-          />
-        </div>
-      </section>
+        <section className="route-band" id="matters" data-reveal>
+          <div className="page-width route-band-inner"><div className="route-band-label"><span className="route-band-line" /> {t.howKicker}</div><p>{t.howBody}</p><div className="route-band-mark">W / 01</div></div>
+        </section>
 
-      {/* Service catalog preview */}
-      <section className="border-y border-border bg-muted/30">
-        <div className="container mx-auto px-4 py-16">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <Badge variant="secondary">{ar ? "كتالوج الخدمات" : "Service catalog"}</Badge>
-              <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
-                {ar ? "خدمات قانونية أردنية عن بُعد" : "Remote Jordanian legal services"}
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {ar
-                  ? "كل خدمة لها إجراء رسمي، قائمة مستندات، ومصادر حكومية واضحة. الذكاء الاصطناعي لا يخترع خدمات خارج هذا الكتالوج."
-                  : "Each service has an official procedure, document checklist, and clear government sources. The AI does not invent services outside this catalog."}
-              </p>
+        <section className="process-section" data-reveal>
+          <div className="page-width">
+            <div className="section-route-label"><span className="route-node-dot" />02 / {isArabic ? "التوجيه" : "ORIENTATION"}<span className="route-line" /><ArrowDownRight size={14} /></div>
+            <div className="section-heading centered"><span className="section-kicker">{t.howKicker}</span><h2>{t.howTitle}</h2><p>{t.howBody}</p></div>
+            <div className="process-grid">
+              {[{number:"01", icon:Globe2, title:t.step1, body:t.step1Body}, {number:"02", icon:Sparkles, title:t.step2, body:t.step2Body}, {number:"03", icon:FileCheck2, title:t.step3, body:t.step3Body}].map(({number, icon: Icon, title, body}) => <article className="process-card" data-reveal key={number}><div className="process-card-top"><span>{number}</span><span className="process-icon"><Icon size={19} /></span></div><h3>{title}</h3><p>{body}</p><button className="process-card-action" type="button" onClick={openIntake}><DirectionArrow size={15} /></button></article>)}
             </div>
-            <Link href="/services">
-              <Button variant="outline" className="gap-1.5">
-                {ar ? "عرض الكل" : "View all"}
-                {ar ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
-              </Button>
-            </Link>
+            <div className="route-visual" data-reveal><div className="route-visual-copy"><span className="section-kicker">ROUTE / EVIDENCE</span><strong>{isArabic ? "ثلاث نقاط تحقق قبل أن يبدأ العمل" : "Three checkpoints before the work begins"}</strong><span>{isArabic ? "مسار موثق، واضح، وقابل للمتابعة." : "A documented route that stays clear and traceable."}</span></div><div className="route-visual-map"><img src={routeAsset} alt={isArabic ? "مخطط بصري لمسار المعاملة من التوجيه إلى الإنجاز" : "Visual route from orientation to completion"} /><div className="route-hotspots" aria-label={isArabic ? "نقاط التحقق في المسار" : "Route checkpoints"}>{[0, 1, 2].map((index) => <Tooltip key={index}><TooltipTrigger asChild><button className={`route-hotspot route-hotspot--${index + 1}`} type="button" aria-label={isArabic ? `نقطة التحقق ${index + 1}` : `Checkpoint ${index + 1}`}><span>{String(index + 1).padStart(2, "0")}</span></button></TooltipTrigger><TooltipContent side="top" className="route-tooltip" dir={isArabic ? "rtl" : "ltr"}>{t.routeHints[index + 1]}</TooltipContent></Tooltip>)}</div></div></div>
           </div>
+        </section>
 
-          {loading ? (
-            <div className="grid gap-4 md:grid-cols-3">
-              {[0, 1, 2].map((i) => (
-                <Card key={i} className="h-48 animate-pulse">
-                  <CardContent className="h-full" />
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {services.slice(0, 6).map((s) => (
-                <ServicePreviewCard key={s.id} service={s} ar={ar} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* What makes us different */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="mx-auto mb-10 max-w-2xl text-center">
-          <Badge variant="secondary">{ar ? "لماذا نحن" : "Why us"}</Badge>
-          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
-            {ar ? "ذكاء اصطناعي + محامون + جهات رسمية" : "AI + lawyers + official authorities"}
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            {ar
-              ? "الذكاء الاصطناعي للتنقّي والتوجيه فقط — العمل الحقيقي يقوم به محامون مرخصون وجهات حكومية أردنية."
-              : "AI is for navigation and intelligence only — real work is done by licensed lawyers and Jordanian government authorities."}
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <FeatureCard
-            icon={<ShieldCheck className="h-5 w-5" />}
-            ar={ar}
-            titleAr="لا اختراع خدمات"
-            titleEn="No invented services"
-            descAr="الذكاء الاصطناعي يختار فقط من كتالوج الخدمات الموثقة."
-            descEn="The AI picks only from a documented catalog of services."
-          />
-          <FeatureCard
-            icon={<Globe className="h-5 w-5" />}
-            ar={ar}
-            titleAr="حكم صريح على الأهلية عن بُعد"
-            titleEn="Explicit remote-eligibility verdict"
-            descAr="لا يدّعي إنجازاً كاملاً عن بُعد ما لم يقل الإجراء ذلك."
-            descEn="Never claims full remote completion unless the procedure says so."
-          />
-          <FeatureCard
-            icon={<Landmark className="h-5 w-5" />}
-            ar={ar}
-            titleAr="شفافية الرسوم"
-            titleEn="Fee transparency"
-            descAr="رسوم منصة + رسوم محامٍ + رسوم حكومية — مفصولة، لا ادعاء بالشمول."
-            descEn="Platform fee + lawyer fee + government fee — separated, no false bundling."
-          />
-          <FeatureCard
-            icon={<Languages className="h-5 w-5" />}
-            ar={ar}
-            titleAr="ثنائي اللغة"
-            titleEn="Bilingual by design"
-            descAr="عربي وإنجليزي، RTL وLTR، في كل مكان."
-            descEn="Arabic and English, RTL and LTR, everywhere."
-          />
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="container mx-auto px-4 pb-16">
-        <div className="relative overflow-hidden rounded-2xl bg-primary p-8 text-primary-foreground sm:p-12">
-          <div className="relative grid items-center gap-8 md:grid-cols-2">
-            <div>
-              <h2 className="text-2xl font-extrabold leading-tight sm:text-3xl">
-                {ar ? "جاهز لبدء معاملتك؟" : "Ready to start your matter?"}
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-primary-foreground/85">
-                {ar
-                  ? "ابدأ الآن بثلاث خطوات — لا التزام قبل إنشاء القضية."
-                  : "Start now in three steps — no commitment before creating a matter."}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3 md:justify-end">
-              <Link href="/intake">
-                <Button size="lg" variant="secondary" className="gap-2">
-                  <KeyRound className="h-4 w-4" />
-                  {ar ? "ابدأ التوجيه" : "Start guided intake"}
-                </Button>
-              </Link>
-              <Link href="/services">
-                <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">
-                  {ar ? "تصفح الخدمات" : "Browse services"}
-                </Button>
-              </Link>
-            </div>
+        <section className="catalog-section" id="services" data-reveal>
+          <div className="page-width catalog-grid">
+            <div className="catalog-image"><img src={servicesAsset} alt={isArabic ? "مستندات وملف خدمة قانونية" : "Documents and a legal service file"} /><div className="catalog-image-caption"><span>{t.servicesKicker}</span><span>03 / 04</span></div><div className="catalog-stamp">J</div><div className="image-evidence-tag">CASE / 02 <span>JRD — SERVICE FILE</span></div></div>
+            <div className="catalog-copy"><span className="section-kicker">{t.servicesKicker}</span><h2>{t.servicesTitle}</h2><p>{t.servicesBody}</p><div className="catalog-notes"><div><span>01</span><strong>{isArabic ? "إجراء رسمي" : "Formal procedure"}</strong></div><div><span>02</span><strong>{isArabic ? "قائمة مستندات" : "Document list"}</strong></div><div><span>03</span><strong>{isArabic ? "مصادر حكومية" : "Government sources"}</strong></div></div><a className="text-action" href={sitePath("/services")}>{t.viewAll}<DirectionArrow size={16} /></a></div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section className="trust-section" data-reveal>
+          <div className="page-width"><div className="section-route-label section-route-label--light"><span className="route-node-dot" />04 / {isArabic ? "لماذا نحن" : "TRUST FILE"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="trust-layout"><div className="trust-heading"><span className="section-kicker section-kicker--light">{t.whyKicker}</span><h2>{t.whyTitle}</h2><p>{t.whyBody}</p></div><div className="trust-items"><div className="trust-item"><span>01</span><div><h3>{t.noInvent}</h3><p>{t.noInventBody}</p></div><Check size={17} /></div><div className="trust-item"><span>02</span><div><h3>{t.eligibility}</h3><p>{t.eligibilityBody}</p></div><Check size={17} /></div><div className="trust-item"><span>03</span><div><h3>{t.fees}</h3><p>{t.feesBody}</p></div><Check size={17} /></div><div className="trust-item"><span>04</span><div><h3>{t.language}</h3><p>{t.languageBody}</p></div><Check size={17} /></div></div></div></div>
+        </section>
+
+        <section className="bridge-section" data-reveal>
+          <div className="page-width"><div className="section-route-label"><span className="route-node-dot" />05 / {isArabic ? "من الخارج إلى الأردن" : "ABROAD TO JORDAN"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="bridge-grid"><div className="bridge-image"><img src={bridgeAsset} alt={isArabic ? "مساحة عمل عن بعد تتصل بالأردن" : "A remote workspace connected to Jordan"} /><span>{t.bridgeKicker}</span><div className="image-evidence-tag">CASE / 03 <span>REMOTE / JORDAN</span></div></div><div className="bridge-copy"><span className="section-kicker">05 / {t.bridgeKicker}</span><h2>{t.bridgeTitle}</h2><p>{t.bridgeBody}</p><button className="text-action" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={16} /></button></div></div></div>
+        </section>
+
+        <section className="ready-section" data-reveal><div className="page-width ready-inner"><div className="section-route-label section-route-label--ready"><span className="route-node-dot" />06 / {isArabic ? "الخطوة التالية" : "ARRIVAL CHECKPOINT"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="ready-kicker"><span className="section-kicker">07 / NEXT</span><span className="ready-route">{t.routeKicker} <ArrowLeft size={14} /></span></div><h2>{t.readyTitle}</h2><p>{t.readyBody}</p><div className="ready-actions"><button className="primary-action primary-action--dark" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={17} /></button><a className="secondary-action secondary-action--dark" href={sitePath("/services")}>{t.browse}<ArrowDownRight size={16} /></a></div></div></section>
+      </main>
+
     </div>
   );
-}
-
-function HeroFlowDiagram({ ar }: { ar: boolean }) {
-  const steps = [
-    { icon: Globe, labelAr: "أين أنت؟", labelEn: "Where are you?" },
-    { icon: Users, labelAr: "ما حالتك؟", labelEn: "What is your status?" },
-    { icon: Scale, labelAr: "ماذا تحتاج؟", labelEn: "What do you need?" },
-    { icon: Sparkles, labelAr: "توصية", labelEn: "Recommendation" },
-    { icon: FileText, labelAr: "ملف قضية", labelEn: "Matter file" },
-  ];
-  return (
-    <Card className="relative overflow-hidden">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm">
-          {ar ? "التدفق الكامل" : "End-to-end flow"}
-        </CardTitle>
-        <CardDescription className="text-xs">
-          {ar ? "من التوجيه إلى التسليم" : "From intake to delivery"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {steps.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <div key={i} className="flex items-center gap-3">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <span className="flex-1 text-sm font-medium">
-                  {ar ? s.labelAr : s.labelEn}
-                </span>
-                {i < steps.length - 1 && (
-                  <ArrowLeft className={`h-3 w-3 text-muted-foreground ${ar ? "" : "rotate-180"}`} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StepCard({
-  icon, step, ar, titleAr, titleEn, descAr, descEn,
-}: {
-  icon: React.ReactNode; step: number; ar: boolean;
-  titleAr: string; titleEn: string; descAr: string; descEn: string;
-}) {
-  return (
-    <Card className="relative">
-      <CardContent className="pt-6">
-        <div className="absolute end-4 top-4 grid h-7 w-7 place-items-center rounded-full bg-muted text-xs font-bold">
-          {step}
-        </div>
-        <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
-          {icon}
-        </div>
-        <h3 className="mt-3 text-base font-bold">{ar ? titleAr : titleEn}</h3>
-        <p className="mt-2 text-sm leading-7 text-muted-foreground">
-          {ar ? descAr : descEn}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function FeatureCard({
-  icon, ar, titleAr, titleEn, descAr, descEn,
-}: {
-  icon: React.ReactNode; ar: boolean;
-  titleAr: string; titleEn: string; descAr: string; descEn: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <h3 className="mt-3 text-sm font-bold">{ar ? titleAr : titleEn}</h3>
-      <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-        {ar ? descAr : descEn}
-      </p>
-    </div>
-  );
-}
-
-function ServicePreviewCard({ service, ar }: { service: Service; ar: boolean }) {
-  const re = REMOTE_LABEL[service.remoteEligibility] ?? REMOTE_LABEL.unknown;
-  const Icon = getServiceIcon(service.slug);
-  return (
-    <Link href={`/services/${service.slug}`} className="block h-full">
-      <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
-        <CardContent className="flex flex-1 flex-col pt-6">
-          <div className="flex items-start justify-between gap-2">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-              <Icon className="h-5 w-5" />
-            </div>
-            <Badge variant={re.tone} className="text-[10px]">
-              {ar ? re.ar : re.en}
-            </Badge>
-          </div>
-          <h3 className="mt-3 text-base font-bold">
-            {ar ? service.nameAr : service.nameEn}
-          </h3>
-          <p className="mt-1.5 flex-1 text-sm leading-6 text-muted-foreground">
-            {ar ? service.shortAr : service.shortEn}
-          </p>
-          <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {service.typicalDurationDays} {ar ? "يوم" : "days"}
-            </span>
-            <span className="font-semibold text-foreground">
-              {service.lawyerFeeMin}–{service.lawyerFeeMax} JOD
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-function getServiceIcon(slug: string) {
-  switch (slug) {
-    case "property-sale-from-abroad":
-      return Building2;
-    case "power-of-attorney":
-      return KeyRound;
-    case "inheritance-initiation":
-      return ScrollText;
-    case "civil-status-update":
-      return Users;
-    case "company-formation":
-      return Briefcase;
-    case "court-representation":
-      return Gavel;
-    default:
-      return Scale;
-  }
 }
