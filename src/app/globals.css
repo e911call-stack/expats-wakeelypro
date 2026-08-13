@@ -1228,3 +1228,20 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
 
 /* Keep the notice content at the card top so the fixed viewport card has no misleading empty band. */
 .landing-disclaimer-card { justify-content: flex-start; }
+
+/* Final content-fit rule: the card never clips its notice; its natural height is used with a 65% viewport minimum. */
+.landing-disclaimer-card {
+  height: auto;
+  min-height: min(65svh, 760px);
+  max-height: none;
+  overflow: visible;
+  justify-content: flex-start;
+}
+@media (max-width: 640px) {
+  .landing-disclaimer-card {
+    height: auto;
+    min-height: 65svh;
+    max-height: none;
+    overflow: visible;
+  }
+}
