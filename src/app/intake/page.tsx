@@ -139,6 +139,7 @@ export default function IntakePage() {
   const [serviceStep, setServiceStep] = useState<"identity" | "context" | "story" | "documents" | "submitted">("identity");
   const [desiredOutcome, setDesiredOutcome] = useState("");
   const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -151,6 +152,11 @@ export default function IntakePage() {
     if (prompt) {
       setSelectedProcedurePrompt(prompt);
       setNeedText(prompt);
+    }
+    const completedId = window.sessionStorage.getItem("wakeely-intake-completed");
+    if (selectedSlug && completedId) {
+      setIntakeId(completedId);
+      setServiceStep("submitted");
     }
   }, [ar]);
 
@@ -192,7 +198,7 @@ export default function IntakePage() {
       return;
     }
     setError(null);
-    setServiceStep("documents");
+    setIsSubmitting(true);
     try {
       const attachments = await Promise.all(supportingFiles.map(async (file) => ({
         fileName: file.name,
@@ -219,10 +225,13 @@ export default function IntakePage() {
       }
       setIntakeId(data.intakeId);
       setRecommendation(data.recommendation ?? null);
+      window.sessionStorage.setItem("wakeely-intake-completed", data.intakeId);
       setServiceStep("submitted");
     } catch {
       setError(ar ? "تعذر إرسال الطلب حالياً. حاول مرة أخرى." : "We could not submit your request right now. Please try again.");
       setServiceStep("documents");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -314,6 +323,7 @@ export default function IntakePage() {
   function restart() {
     setStep("where");
     setServiceStep("identity");
+    window.sessionStorage.removeItem("wakeely-intake-completed");
     setDesiredOutcome("");
     setSupportingFiles([]);
     setSelectedServiceSlug(null);
@@ -409,6 +419,7 @@ export default function IntakePage() {
             setSupportingFiles={setSupportingFiles}
             error={error}
             intakeId={intakeId}
+            isSubmitting={isSubmitting}
             onSubmit={submitSelectedService}
             onRestart={restart}
           />
@@ -679,7 +690,7 @@ function SelectedServiceIntake({
   clientName, setClientName, clientPhone, setClientPhone, clientEmail, setClientEmail,
   country, setCountry, city, setCity, status, setStatus, urgency, setUrgency,
   needText, setNeedText, desiredOutcome, setDesiredOutcome,
-  supportingFiles, setSupportingFiles, error, intakeId, onSubmit, onRestart,
+  supportingFiles, setSupportingFiles, error, intakeId, isSubmitting, onSubmit, onRestart,
 }: {
   ar: boolean;
   serviceStep: "identity" | "context" | "story" | "documents" | "submitted";
@@ -695,7 +706,7 @@ function SelectedServiceIntake({
   needText: string; setNeedText: (value: string) => void;
   desiredOutcome: string; setDesiredOutcome: (value: string) => void;
   supportingFiles: File[]; setSupportingFiles: Dispatch<SetStateAction<File[]>>;
-  error: string | null; intakeId: string | null;
+  error: string | null; intakeId: string | null; isSubmitting: boolean;
   onSubmit: () => void; onRestart: () => void;
 }) {
   const labels = ar
@@ -724,7 +735,7 @@ function SelectedServiceIntake({
 
       {serviceStep === "story" && <Card><CardHeader><CardTitle>{labels.story}</CardTitle><CardDescription>{ar ? "اكتب الوقائع بطريقتك. لا تحتاج إلى استخدام مصطلحات قانونية." : "Describe the facts in your own words. You do not need legal terminology."}</CardDescription></CardHeader><CardContent className="space-y-4"><div><Label htmlFor="service-facts">{labels.facts}</Label><Textarea id="service-facts" rows={6} value={needText} onChange={(event) => setNeedText(event.target.value)} placeholder={ar ? "مثال: أعيش خارج الأردن، وحدثت المشكلة التالية…" : "Example: I live outside Jordan, and the following happened…"} /></div><div><Label htmlFor="service-outcome">{labels.outcome}</Label><Textarea id="service-outcome" rows={4} value={desiredOutcome} onChange={(event) => setDesiredOutcome(event.target.value)} placeholder={ar ? "مثال: أريد معرفة الخطوات والوثائق المطلوبة…" : "Example: I want to understand the steps and documents required…"} /></div>{error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}<div className="flex justify-between"><Button variant="ghost" onClick={() => setServiceStep("context")}><ArrowRight className="h-4 w-4" />{labels.back}</Button><Button onClick={() => setServiceStep("documents")} disabled={needText.trim().length < 20 || desiredOutcome.trim().length < 5}>{labels.next}<ArrowLeft className="h-4 w-4" /></Button></div></CardContent></Card>}
 
-      {serviceStep === "documents" && <Card><CardHeader><CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5" />{labels.upload}</CardTitle><CardDescription>{ar ? "يمكنك إرفاق صور أو ملفات PDF أو مستندات Word. الحد الأقصى 3 ملفات، و2 ميغابايت لكل ملف." : "Attach images, PDFs, or Word documents. Up to 3 files, 2 MB each."} <span className="text-muted-foreground">({labels.optional})</span></CardDescription></CardHeader><CardContent className="space-y-4"><Input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={(event) => addFiles(event.target.files)} />{supportingFiles.length > 0 && <div className="space-y-2">{supportingFiles.map((file, index) => <div key={`${file.name}-${index}`} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"><span className="truncate">{file.name}</span><button type="button" aria-label={ar ? "حذف الملف" : "Remove file"} onClick={() => setSupportingFiles((previous) => previous.filter((_, fileIndex) => fileIndex !== index))}><Trash2 className="h-4 w-4 text-muted-foreground" /></button></div>)}</div>}{error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}<div className="flex justify-between"><Button variant="ghost" onClick={() => setServiceStep("story")}><ArrowRight className="h-4 w-4" />{labels.back}</Button><Button onClick={onSubmit} className="gap-2"><Send className="h-4 w-4" />{labels.send}</Button></div></CardContent></Card>}
+      {serviceStep === "documents" && <Card><CardHeader><CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5" />{labels.upload}</CardTitle><CardDescription>{ar ? "يمكنك إرفاق صور أو ملفات PDF أو مستندات Word. الحد الأقصى 3 ملفات، و2 ميغابايت لكل ملف." : "Attach images, PDFs, or Word documents. Up to 3 files, 2 MB each."} <span className="text-muted-foreground">({labels.optional})</span></CardDescription></CardHeader><CardContent className="space-y-4"><Input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={(event) => addFiles(event.target.files)} />{supportingFiles.length > 0 && <div className="space-y-2">{supportingFiles.map((file, index) => <div key={`${file.name}-${index}`} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"><span className="truncate">{file.name}</span><button type="button" aria-label={ar ? "حذف الملف" : "Remove file"} onClick={() => setSupportingFiles((previous) => previous.filter((_, fileIndex) => fileIndex !== index))}><Trash2 className="h-4 w-4 text-muted-foreground" /></button></div>)}</div>}{error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}<div className="flex justify-between"><Button variant="ghost" onClick={() => setServiceStep("story")}><ArrowRight className="h-4 w-4" />{labels.back}</Button><Button onClick={onSubmit} disabled={isSubmitting} className="gap-2"><Send className="h-4 w-4" />{isSubmitting ? (ar ? "جارٍ الإرسال…" : "Submitting…") : labels.send}</Button></div></CardContent></Card>}
     </div>
   );
 }

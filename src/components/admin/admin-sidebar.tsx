@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Briefcase,
   FileText,
+  ClipboardList,
   Gavel,
   Users,
   CreditCard,
@@ -36,6 +37,12 @@ const NAV = [
     icon: FileText,
     labelAr: "القضايا والإسناد",
     labelEn: "Matters",
+  },
+  {
+    href: "/admin/intakes",
+    icon: ClipboardList,
+    labelAr: "طلبات العملاء",
+    labelEn: "Client Intakes",
   },
   {
     href: "/admin/lawyers",
