@@ -23,16 +23,16 @@ export const metadata: Metadata = {
     description: "Bilingual, transparent guidance for completing legal matters in Jordan from anywhere in the world.",
     locale: "ar_JO",
     alternateLocale: ["en_US"],
-    images: [{ url: "/WakeelyProLog.png", width: 655, height: 287, alt: "WakeelyPro Jordan Remote Legal Services" }],
+    images: [{ url: "/expat-legal-services-logo.png", width: 736, height: 265, alt: "خدمات المغتربين القانونية" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "WakeelyPro | Jordan Remote Legal Services",
     description: "Bilingual remote legal services for Jordanian matters.",
-    images: ["/WakeelyProLog.png"],
+    images: ["/expat-legal-services-logo.png"],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
-  icons: { icon: "/WakeelyProLog.png" },
+  icons: { icon: "/expat-legal-services-logo.png" },
 };
 
 export default function RootLayout({

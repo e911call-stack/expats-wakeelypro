@@ -159,35 +159,35 @@
 :root {
   --charcoal: #28231f;
   --charcoal-soft: #4a3d34;
-  --paper: #f3ecdf;
-  --paper-warm: #e9ddcb;
-  --paper-deep: #d6c4a8;
-  --brass: #9a654d;
-  --brass-dark: #744536;
-  --brass-pale: #ead8ca;
-  --green: #167a59;
-  --green-dark: #0c5d43;
-  --green-pale: #d5e8dd;
+  --paper: #fdf7e3;
+  --paper-warm: #f6edcf;
+  --paper-deep: #e8d9b7;
+  --brass: #006c8e;
+  --brass-dark: #00536d;
+  --brass-pale: #d6edf3;
+  --green: #006c8e;
+  --green-dark: #00536d;
+  --green-pale: #d6edf3;
   --terracotta: #b86452;
   --line: rgba(40, 35, 31, 0.17);
   --line-light: rgba(241, 231, 214, 0.24);
   --muted: #74695e;
   --radius: 0.45rem;
-  --background: oklch(0.94 0.025 78);
-  --foreground: oklch(0.24 0.02 55);
-  --card: oklch(0.94 0.025 78);
-  --card-foreground: oklch(0.24 0.02 55);
-  --popover: oklch(0.94 0.025 78);
-  --popover-foreground: oklch(0.24 0.02 55);
-  --primary: oklch(0.46 0.085 160);
-  --primary-foreground: oklch(0.94 0.025 78);
-  --secondary: oklch(0.88 0.03 78);
-  --secondary-foreground: oklch(0.24 0.02 55);
-  --accent: oklch(0.46 0.085 160);
-  --accent-foreground: oklch(0.94 0.025 78);
-  --border: oklch(0.8 0.03 72);
-  --input: oklch(0.8 0.03 72);
-  --ring: oklch(0.46 0.085 160);
+  --background: #fdf7e3;
+  --foreground: #28231f;
+  --card: #fdf7e3;
+  --card-foreground: #28231f;
+  --popover: #fdf7e3;
+  --popover-foreground: #28231f;
+  --primary: #006c8e;
+  --primary-foreground: #fdf7e3;
+  --secondary: #f6edcf;
+  --secondary-foreground: #28231f;
+  --accent: #006c8e;
+  --accent-foreground: #fdf7e3;
+  --border: #dfd2b6;
+  --input: #dfd2b6;
+  --ring: #006c8e;
 }
 
 * { box-sizing: border-box; }
@@ -827,9 +827,16 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
 .dark .mobile-drawer nav a { color: #f2e9dc; }
 .dark .mobile-bottom-nav { background: rgba(23,20,18,.94); }
 .dark .mobile-bottom-nav a, .dark .mobile-bottom-nav button { color: #d9cfc2; }
-.dark .mobile-bottom-nav a.is-active { color: #6ad8af; }
+.dark .mobile-bottom-nav a.is-active { color: #66c4df; }
 .dark .mobile-drawer-cta { color: #fff8f0; }
 
 @media (min-width: 641px) {
   .wakeely-page > .mobile-bottom-nav, .wakeely-page > .mobile-drawer, .wakeely-page > .mobile-menu-backdrop { display: none; }
 }
+
+/* Site-wide teal palette override for shared status utilities. */
+:where(.text-emerald-300, .text-emerald-500, .text-emerald-600, .text-emerald-700, .text-emerald-800) { color: #006c8e !important; }
+:where(.bg-emerald-100, .bg-emerald-200, .bg-emerald-500, .bg-emerald-600, .bg-emerald-900\/40) { background-color: #006c8e !important; }
+:where(.bg-emerald-100, .bg-emerald-200) { background-color: #d6edf3 !important; }
+:where(.border-emerald-500, .border-emerald-600) { border-color: #006c8e !important; }
+:where(.ring-emerald-500, .ring-emerald-600) { --tw-ring-color: #006c8e !important; }

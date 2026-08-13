@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "@/lib/session-provider";
 import { useLocale } from "@/lib/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,12 @@ import {
 import { Scale, LogOut, User as UserIcon, ChevronDown, Globe, Bell, Shield, Menu, Home, Briefcase, FileText, Gavel, Bell as BellIcon } from "lucide-react";
 
 export function SiteHeader() {
-  const { user, loading, signOut, refresh } = useSession();
+  const pathname = usePathname();
+  const { user, loading, signOut } = useSession();
   const { locale, setLocale, t } = useLocale();
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  if (pathname === "/") return null;
 
   useEffect(() => {
     if (!user) { setUnread(0); return; }
