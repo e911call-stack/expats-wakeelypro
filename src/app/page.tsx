@@ -322,15 +322,15 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
                 {slides.map((slide, index) => (
                   <img key={slide.src} src={slide.src} alt={slide.alt} className={index === activeSlide ? "is-active" : ""} aria-hidden={index !== activeSlide} />
                 ))}
-                <span>WAKEELY / {slides[activeSlide].code} — {sliderPaused ? (isArabic ? "متوقف للقراءة" : "PAUSED FOR READING") : "AUTO PLAY"}</span>
-                <div className="hero-slide-controls">
-                  <button type="button" onClick={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} aria-label={isArabic ? "الصورة السابقة" : "Previous slide"}>←</button>
-                  <div className="hero-slide-center-controls">
-                    <div className="hero-slide-dots">{slides.map((slide, index) => <button key={slide.code} type="button" className={index === activeSlide ? "is-active" : ""} onClick={() => setActiveSlide(index)} aria-label={`${isArabic ? "الشريحة" : "Slide"} ${index + 1}`} />)}</div>
-                    <button className="hero-slide-pause" type="button" onClick={() => setSliderPaused((paused) => !paused)} aria-label={sliderPaused ? (isArabic ? "تشغيل الشرائح" : "Resume slides") : (isArabic ? "إيقاف الشرائح مؤقتاً" : "Pause slides")}>{sliderPaused ? <Play size={11} /> : <Pause size={11} />}<span>{sliderPaused ? (isArabic ? "تشغيل" : "Play") : (isArabic ? "إيقاف" : "Pause")}</span></button>
-                  </div>
-                  <button type="button" onClick={() => setActiveSlide((activeSlide + 1) % slides.length)} aria-label={isArabic ? "الصورة التالية" : "Next slide"}>→</button>
+                <span className="hero-slide-badge">{sliderPaused ? (isArabic ? "متوقف للقراءة" : "PAUSED FOR READING") : "WAKEELY / LEGAL JOURNEY"}</span>
+              </div>
+              <div className="hero-slide-toolbar">
+                <button type="button" onClick={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} aria-label={isArabic ? "الصورة السابقة" : "Previous slide"}>←</button>
+                <div className="hero-slide-center-controls">
+                  <div className="hero-slide-dots">{slides.map((slide, index) => <button key={slide.code} type="button" className={index === activeSlide ? "is-active" : ""} onClick={() => setActiveSlide(index)} aria-label={`${isArabic ? "الشريحة" : "Slide"} ${index + 1}`} />)}</div>
+                  <button className="hero-slide-pause" type="button" onClick={() => setSliderPaused((paused) => !paused)} aria-label={sliderPaused ? (isArabic ? "تشغيل الشرائح" : "Resume slides") : (isArabic ? "إيقاف الشرائح مؤقتاً" : "Pause slides")}>{sliderPaused ? <Play size={11} /> : <Pause size={11} />}<span>{sliderPaused ? (isArabic ? "تشغيل" : "Play") : (isArabic ? "إيقاف" : "Pause")}</span></button>
                 </div>
+                <button type="button" onClick={() => setActiveSlide((activeSlide + 1) % slides.length)} aria-label={isArabic ? "الصورة التالية" : "Next slide"}>→</button>
               </div>
             </div>
           </div>
