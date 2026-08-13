@@ -1122,3 +1122,81 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   .landing-disclaimer-copy p { margin-bottom: 8px; }
   .landing-disclaimer-divider { margin: 11px 0; }
 }
+
+/* Final fixed disclaimer layout: complete bilingual notice visible without scrolling. */
+.landing-disclaimer-card {
+  width: min(820px, calc(100% - 32px));
+  height: min(70svh, 760px);
+  max-height: calc(100svh - 28px);
+  overflow: hidden;
+  padding: clamp(14px, 2vw, 24px) clamp(18px, 3vw, 34px);
+}
+.landing-disclaimer-icon {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 7px;
+  border-radius: 10px;
+}
+.landing-disclaimer-kicker {
+  margin-bottom: 3px;
+  font-size: .72rem;
+}
+.landing-disclaimer-card h1 {
+  margin-bottom: 7px;
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+}
+.landing-disclaimer-card h2 {
+  margin-bottom: 7px;
+  font-size: clamp(1.18rem, 2vw, 1.65rem);
+}
+.landing-disclaimer-copy,
+.landing-disclaimer-language--en .landing-disclaimer-copy {
+  font-size: clamp(.72rem, 1.05vw, .88rem);
+  line-height: 1.42;
+}
+.landing-disclaimer-copy p,
+.landing-disclaimer-copy p:last-child {
+  margin-bottom: 6px;
+}
+.landing-disclaimer-divider {
+  gap: 9px;
+  margin: 8px 0;
+  font-size: .62rem;
+}
+.landing-disclaimer-actions {
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 7px;
+}
+.landing-disclaimer-accept,
+.landing-disclaimer-decline {
+  min-height: 34px;
+  height: 34px;
+  padding: 0 8px;
+  font-size: .76rem;
+}
+@media (max-width: 640px) {
+  .landing-disclaimer-gate { padding: 12px; }
+  .landing-disclaimer-card {
+    width: calc(100% - 4px);
+    height: min(70svh, 600px);
+    max-height: calc(100svh - 20px);
+    padding: 10px 12px 11px;
+    border-radius: 13px;
+  }
+  .landing-disclaimer-icon { width: 30px; height: 30px; margin-bottom: 5px; }
+  .landing-disclaimer-kicker { font-size: .61rem; }
+  .landing-disclaimer-card h1 { margin-bottom: 5px; font-size: 1.22rem; }
+  .landing-disclaimer-card h2 { margin-bottom: 5px; font-size: 1.08rem; }
+  .landing-disclaimer-copy,
+  .landing-disclaimer-language--en .landing-disclaimer-copy {
+    font-size: .68rem;
+    line-height: 1.34;
+  }
+  .landing-disclaimer-copy p,
+  .landing-disclaimer-copy p:last-child { margin-bottom: 4px; }
+  .landing-disclaimer-divider { margin: 6px 0; }
+  .landing-disclaimer-actions { gap: 5px; margin-top: 5px; }
+  .landing-disclaimer-accept,
+  .landing-disclaimer-decline { min-height: 30px; height: 30px; font-size: .65rem; }
+}
