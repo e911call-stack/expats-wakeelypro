@@ -501,7 +501,8 @@ a { color: inherit; text-decoration: none; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
 
-[data-reveal] { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.23,1,.32,1), transform .7s cubic-bezier(.23,1,.32,1); }
+/* Content must remain visible even when an observer is unavailable or delayed (for example in tall screenshots, reduced-browser modes, and accessibility tools). */
+[data-reveal] { opacity: 1; transform: translateY(0); transition: opacity .7s cubic-bezier(.23,1,.32,1), transform .7s cubic-bezier(.23,1,.32,1); }
 [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 .process-card[data-reveal]:nth-child(2) { transition-delay: 70ms; }
 .process-card[data-reveal]:nth-child(3) { transition-delay: 140ms; }
