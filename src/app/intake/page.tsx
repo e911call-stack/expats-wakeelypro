@@ -68,6 +68,8 @@ const REMOTE_LABEL: Record<string, { ar: string; en: string }> = {
   unknown: { ar: "غير محدد", en: "Unknown" },
 };
 
+type ProcedureStep = { ar: string; en: string };
+
 type Recommendation = {
   service: {
     id: string; slug: string; nameAr: string; nameEn: string;
@@ -83,8 +85,8 @@ type Recommendation = {
     nameAr: string; nameEn: string;
     remoteEligibility: string;
     remoteEligibilityReasonAr: string; remoteEligibilityReasonEn: string;
-    physicalPresenceStepsJson: string;
-    remoteStepsJson: string;
+    physicalPresenceSteps: unknown;
+    remoteSteps: unknown;
     authorityAr: string | null; authorityEn: string | null;
     legalBasisAr: string | null; legalBasisEn: string | null;
     notesAr: string | null; notesEn: string | null;
@@ -122,6 +124,21 @@ export default function IntakePage() {
     setNeedText(ar ? preset.ar : preset.en);
   }
 
+  function getErrorMessage(data: { error?: string; message?: string; requestId?: string }) {
+    if (data.error === "internal_error") {
+      return ar
+        ? "تعذر تحليل الطلب حالياً. يرجى المحاولة مرة أخرى بعد قليل."
+        : "We could not analyze your request right now. Please try again shortly.";
+    }
+    if (data.error === "unauthorized") {
+      return ar ? "يرجى تسجيل الدخول أولاً." : "Please sign in first.";
+    }
+    if (data.error === "rate_limited") {
+      return ar ? "تم تجاوز الحد المؤقت للطلبات. يرجى المحاولة لاحقاً." : "Too many requests. Please try again later.";
+    }
+    return data.message || data.error || (ar ? "حدث خطأ غير متوقع." : "Something went wrong.");
+  }
+
   async function analyze() {
     if (!user) {
       router.push("/#signin");
@@ -148,7 +165,7 @@ export default function IntakePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || data.error || "unknown_error");
+        setError(getErrorMessage(data));
         setStep("need");
         return;
       }
@@ -156,7 +173,7 @@ export default function IntakePage() {
       setRecommendation(data.recommendation ?? null);
       setStep("result");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "network_error");
+      setError(ar ? "تعذر الاتصال بالخدمة. تحقق من الاتصال وحاول مرة أخرى." : "The service could not be reached. Check your connection and try again.");
       setStep("need");
     }
   }
@@ -188,12 +205,12 @@ export default function IntakePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || data.error || "unknown_error");
+        setError(getErrorMessage(data));
         return;
       }
       router.push(`/matters/${data.matter.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "network_error");
+      setError(ar ? "تعذر الاتصال بالخدمة. تحقق من الاتصال وحاول مرة أخرى." : "The service could not be reached. Check your connection and try again.");
     }
   }
 
@@ -508,8 +525,20 @@ function RecommendationView({
   const reLabel = REMOTE_LABEL[rec.remoteEligibility] ?? REMOTE_LABEL.unknown;
   const reTone = REMOTE_TONES[rec.remoteEligibility] ?? "secondary";
   const confidencePct = Math.round(rec.confidence * 100);
-  const physicalSteps = rec.procedure ? (JSON.parse(rec.procedure.physicalPresenceStepsJson || "[]") as { ar: string; en: string }[]) : [];
-  const remoteSteps = rec.procedure ? (JSON.parse(rec.procedure.remoteStepsJson || "[]") as { ar: string; en: string }[]) : [];
+  function parseSteps(value: unknown): ProcedureStep[] {
+    if (Array.isArray(value)) return value as ProcedureStep[];
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed as ProcedureStep[] : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+  const physicalSteps = rec.procedure ? parseSteps(rec.procedure.physicalPresenceSteps) : [];
+  const remoteSteps = rec.procedure ? parseSteps(rec.procedure.remoteSteps) : [];
 
   return (
     <>
