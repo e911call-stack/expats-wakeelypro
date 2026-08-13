@@ -6,10 +6,33 @@ import { SessionProvider } from "@/lib/session-provider";
 import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
-  title: "Jordan Remote Legal Services — Phase 1",
+  metadataBase: new URL("https://expats.wakeelypro.com"),
+  title: {
+    default: "WakeelyPro | Jordan Remote Legal Services",
+    template: "%s | WakeelyPro",
+  },
   description:
-    "Get your legal matters done in Jordan from anywhere in the world. Bilingual AI-guided intake, document checklists, remote-eligibility verdict, lawyer matching, matter tracking, messaging and payments.",
-  keywords: ["Jordan", "legal", "remote", "lawyer", "property", "power of attorney", "inheritance"],
+    "Handle Jordanian legal matters remotely from anywhere in the world with bilingual AI-guided intake, document checklists, licensed lawyer matching, and transparent case tracking.",
+  keywords: ["Jordan legal services", "Jordanian lawyer", "remote legal services", "power of attorney Jordan", "property Jordan", "inheritance Jordan", "WakeelyPro"],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "https://expats.wakeelypro.com/",
+    siteName: "WakeelyPro",
+    title: "WakeelyPro | Jordan Remote Legal Services",
+    description: "Bilingual, transparent guidance for completing legal matters in Jordan from anywhere in the world.",
+    locale: "ar_JO",
+    alternateLocale: ["en_US"],
+    images: [{ url: "/WakeelyProLog.png", width: 655, height: 287, alt: "WakeelyPro Jordan Remote Legal Services" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WakeelyPro | Jordan Remote Legal Services",
+    description: "Bilingual remote legal services for Jordanian matters.",
+    images: ["/WakeelyProLog.png"],
+  },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
+  icons: { icon: "/WakeelyProLog.png" },
 };
 
 export default function RootLayout({

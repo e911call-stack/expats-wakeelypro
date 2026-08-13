@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const markAsset = "/manus-storage/wakeely-mark.svg";
+const markAsset = "/WakeelyProLog.png";
 const heroAsset = "/manus-storage/wakeely-hero-editorial.svg";
 const servicesAsset = "/manus-storage/wakeely-services.svg";
 const bridgeAsset = "/manus-storage/wakeely-bridge.svg";
@@ -181,7 +181,7 @@ function Brand({ language }: { language: Language }) {
   const t = text[language];
   return (
     <a className="brand" href="#top" aria-label={t.brand}>
-      <span className="brand-mark"><img src={markAsset} alt="" /></span>
+      <span className="brand-mark brand-logo"><img src={markAsset} alt="WakeelyPro" /></span>
       <span className="brand-copy"><strong>{t.brand}</strong><small>{t.englishBrand}</small></span>
     </a>
   );
@@ -229,11 +229,34 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    document.body.classList.add("landing-active");
+    return () => document.body.classList.remove("landing-active");
+  }, []);
+
   return (
     <div ref={pageRef} className={`wakeely-page ${isArabic ? "is-arabic" : "is-english"}`} dir={isArabic ? "rtl" : "ltr"} lang={language} id="top">
       <div className="phase-bar"><span className="phase-dot" /> {t.phase}<span className="phase-separator" /> <span>{t.bilingual}</span></div>
 
 
+
+      <header className="wakeely-header">
+        <div className="header-inner page-width">
+          <Brand language={language} />
+          <nav className="main-nav" aria-label={isArabic ? "التنقل الرئيسي" : "Primary navigation"}>
+            <a className="active" href="#top">{t.navHome}</a>
+            <a href="#services">{t.navServices}</a>
+            <a href="#matters">{t.navMatters}</a>
+          </nav>
+          <div className="header-tools">
+            <button className="language-toggle" onClick={() => changeLanguage(isArabic ? "en" : "ar")} aria-label={isArabic ? "Switch to English" : "التحويل إلى العربية"}><Languages size={15} /> {t.switchTo}</button>
+            <button className="theme-toggle" type="button" onClick={() => toggleTheme()} aria-label={theme === "dark" ? t.themeLight : t.themeDark} title={theme === "dark" ? t.themeLight : t.themeDark}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}<span>{theme === "dark" ? t.themeLight : t.themeDark}</span></button>
+            <a className="signin-link" href={sitePath("/auth/signin")}>{t.signIn}</a>
+            <button className="mobile-menu-toggle" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={21} /> : <Menu size={21} />}</button>
+          </div>
+        </div>
+        {menuOpen && <div className="mobile-menu page-width"><a href="#top" onClick={closeMenu}>{t.navHome}<DirectionArrow size={15} /></a><a href={sitePath("/services")} onClick={closeMenu}>{t.navServices}<DirectionArrow size={15} /></a><a href={sitePath("/matters")} onClick={closeMenu}>{t.navMatters}<DirectionArrow size={15} /></a><a className="mobile-signin" href={sitePath("/auth/signin")} onClick={closeMenu}>{t.signIn}<DirectionArrow size={15} /></a></div>}
+      </header>
 
       <main>
         <section className="wakeely-hero">

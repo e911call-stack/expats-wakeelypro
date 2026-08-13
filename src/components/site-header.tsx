@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/session-provider";
 import { useLocale } from "@/lib/locale-provider";
@@ -93,12 +94,9 @@ export function SiteHeader() {
           </Sheet>
 
           <Link href="/" className="flex min-w-0 items-center gap-2">
-            <div className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <Scale className="h-4 w-4" />
+            <div className="relative h-10 w-[132px] flex-shrink-0">
+              <Image src="/WakeelyProLog.png" alt="WakeelyPro" fill sizes="132px" className="object-contain object-center" priority />
             </div>
-            <span className="hidden text-sm font-bold tracking-tight sm:inline truncate">
-              {locale === "ar" ? "خدمات المغتربين القانونية" : "Expats WakeelyPro"}
-            </span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">

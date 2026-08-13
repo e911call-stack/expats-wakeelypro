@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -757,3 +758,19 @@ a { color: inherit; text-decoration: none; }
   .theme-toggle span { display: none; }
   .header-tools { gap: 11px; }
 }
+
+
+/* Landing-page chrome: use the editorial header on the homepage only. */
+body.landing-active > header,
+body.landing-active > footer { display: none; }
+.brand-mark.brand-logo { width: 148px; height: 52px; background: transparent; }
+.brand-mark.brand-logo img { width: 100%; height: 100%; object-fit: contain; filter: none; }
+@media (max-width: 640px) {
+  .brand-mark.brand-logo { width: 122px; height: 45px; }
+  .brand { min-width: 0; }
+  .brand-copy { display: none; }
+  .wakeely-header { position: sticky; top: 0; }
+}
+
+body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
+.is-english, .is-english button, .is-english input, .is-english select, .is-english textarea { font-family: "Manrope", "Tajawal", sans-serif; }
