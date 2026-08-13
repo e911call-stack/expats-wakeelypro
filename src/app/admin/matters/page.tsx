@@ -9,7 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  ShieldAlert, Loader2, Gavel, Globe, RefreshCw, Users, FileText, Clock, CheckCircle2,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  ShieldAlert, Loader2, Gavel, Globe, RefreshCw, Users, FileText, Clock, CheckCircle2, ArrowDownUp, Eye, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 type Matter = {
@@ -21,7 +25,7 @@ type Matter = {
   progressPercent: number;
   createdAt: string;
   legalService: { slug: string; nameAr: string; nameEn: string } | null;
-  client: { id: string; name: string; email: string; currentCountry: string | null; clientStatus: string | null } | null;
+  client: { id: string; name: string; email: string; phone: string | null; currentCountry: string | null; clientStatus: string | null } | null;
   lawyer: { id: string; user: { name: string; email: string } } | null;
   _count: { documents: number; tasks: number; conversations: number };
 };
@@ -71,26 +75,67 @@ export default function AdminMattersPage() {
   const [assignError, setAssignError] = useState<string | null>(null);
   const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
 
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [assignedFilter, setAssignedFilter] = useState<string>("all");
+  const [needsAssignment, setNeedsAssignment] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const perPage = 25;
+  const [changingStatus, setChangingStatus] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (assignedFilter !== "all") params.set("assigned", assignedFilter);
+      if (needsAssignment) params.set("needsAssignment", "true");
+      if (search.trim()) params.set("search", search.trim());
+      params.set("page", String(page));
+      params.set("perPage", String(perPage));
       const [mRes, lRes] = await Promise.all([
-        fetch("/api/legal/matters", { cache: "no-store" }),
+        fetch(`/api/admin/matters?${params.toString()}`, { cache: "no-store" }),
         fetch("/api/lawyers", { cache: "no-store" }),
       ]);
       const m = await mRes.json();
       const l = await lRes.json();
       setMatters(m.matters ?? []);
+      setTotal(m.total ?? 0);
       setLawyers(l.lawyers ?? []);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter, assignedFilter, needsAssignment, search, page]);
 
   useEffect(() => {
     if (user && user.role === "ADMIN") load();
     else setLoading(false);
   }, [user, load]);
+
+  async function changeStatus(matterId: string, status: string) {
+    if (!status) return;
+    setChangingStatus(matterId);
+    setStatusMsg(null);
+    try {
+      const res = await fetch(`/api/legal/matters/${matterId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || "status_update_failed");
+      setStatusMsg(ar ? `تم تحديث الحالة إلى ${STATUS_LABEL[status]?.ar ?? status}` : `Status updated to ${STATUS_LABEL[status]?.en ?? status}`);
+      await load();
+    } catch (e) {
+      setAssignError(e instanceof Error ? e.message : "status_update_failed");
+    } finally {
+      setChangingStatus(null);
+      setTimeout(() => { setStatusMsg(null); setAssignError(null); }, 4000);
+    }
+  }
 
   async function assignLawyer(matterId: string, lawyerId: string) {
     if (!lawyerId) return;
@@ -139,6 +184,7 @@ export default function AdminMattersPage() {
 
   const unassigned = matters.filter((m) => !m.lawyer);
   const assigned = matters.filter((m) => m.lawyer);
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
@@ -164,6 +210,59 @@ export default function AdminMattersPage() {
           </Button>
         </div>
 
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardContent className="flex flex-wrap items-end gap-3 py-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{ar ? "بحث" : "Search"}</Label>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder={ar ? "عنوان، موكل، هاتف…" : "Title, client, phone…"}
+                className="h-9 w-56 rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{ar ? "الحالة" : "Status"}</Label>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="all">{ar ? "كل الحالات" : "All statuses"}</SelectItem>
+                  {Object.keys(STATUS_LABEL).map((s) => (
+                    <SelectItem key={s} value={s}>{STATUS_LABEL[s][ar ? "ar" : "en"]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{ar ? "الإسناد" : "Assignment"}</Label>
+              <Select value={assignedFilter} onValueChange={(v) => { setAssignedFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? "الكل" : "All"}</SelectItem>
+                  <SelectItem value="unassigned">{ar ? "غير مسندة" : "Unassigned"}</SelectItem>
+                  <SelectItem value="assigned">{ar ? "مسندة" : "Assigned"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 pb-2">
+              <Button
+                variant={needsAssignment ? "default" : "outline"}
+                size="sm"
+                onClick={() => setNeedsAssignment((v) => !v)}
+              >
+                <Gavel className="h-3.5 w-3.5" />
+                {ar ? "تحتاج إسناداً" : "Needs assignment"}
+              </Button>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("all"); setAssignedFilter("all"); setNeedsAssignment(false); setSearch(""); setPage(1); }} className="gap-1">
+              <ArrowDownUp className="h-3.5 w-3.5" />
+              {ar ? "مسح" : "Clear"}
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Stats */}
         <div className="mb-6 grid gap-3 sm:grid-cols-3">
           <Card><CardContent className="py-4">
@@ -181,6 +280,7 @@ export default function AdminMattersPage() {
         </div>
 
         {assignSuccess && <Alert><AlertDescription className="text-emerald-700"><CheckCircle2 className="inline h-3.5 w-3.5 me-1" />{assignSuccess}</AlertDescription></Alert>}
+        {statusMsg && <Alert><AlertDescription className="text-emerald-700"><CheckCircle2 className="inline h-3.5 w-3.5 me-1" />{statusMsg}</AlertDescription></Alert>}
         {assignError && <Alert variant="destructive"><AlertDescription>{assignError}</AlertDescription></Alert>}
 
         {loading ? (
@@ -243,6 +343,25 @@ export default function AdminMattersPage() {
                               <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(m.createdAt).toLocaleDateString(ar ? "ar-JO" : "en-US")}</span>
                             </div>
                           </div>
+                          <div className="w-full sm:w-72">
+                            <div className="flex gap-2">
+                              <Select value={m.status} onValueChange={(v) => changeStatus(m.id, v)} disabled={changingStatus === m.id}>
+                                <SelectTrigger className="flex-1 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent className="max-h-72">
+                                  {Object.keys(STATUS_LABEL).map((s) => (
+                                    <SelectItem key={s} value={s}>{STATUS_LABEL[s][ar ? "ar" : "en"]}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Link href={`/admin/matters/${m.id}`}>
+                                <Button variant="outline" size="sm" className="gap-1">
+                                  {changingStatus === m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
+                                  {ar ? "عرض" : "View"}
+                                </Button>
+                              </Link>
+                            </div>
+                            <p className="mt-1 text-[10px] text-muted-foreground">{ar ? "غيّر الحالة من القائمة" : "Change status from the list"}</p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -250,6 +369,26 @@ export default function AdminMattersPage() {
                 </div>
               </section>
             )}
+          </div>
+        )}
+
+        {!loading && totalPages > 1 && (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              {ar
+                ? `${total} ${ar ? "قضية" : "matters"} · صفحة ${page} / ${totalPages}`
+                : `${total} matters · Page ${page} of ${totalPages}`}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="gap-1">
+                <ChevronLeft className="h-3.5 w-3.5" />
+                {ar ? "السابق" : "Previous"}
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="gap-1">
+                {ar ? "التالي" : "Next"}
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -264,7 +403,6 @@ function UnassignedMatterCard({
 }) {
   const [selectedLawyer, setSelectedLawyer] = useState<string>("");
   const status = STATUS_LABEL[matter.status] ?? { ar: matter.status, en: matter.status };
-
   // Score lawyers by practice-area overlap with the matter's legal service
   const sortedLawyers = [...lawyers].sort((a, b) => {
     const aMatch = matter.legalService
@@ -303,6 +441,22 @@ function UnassignedMatterCard({
             </div>
           </div>
           <div className="w-full sm:w-72">
+            <div className="mb-2 flex items-center gap-2">
+              <select
+                value={matter.status}
+                disabled
+                className="flex-1 rounded-md border border-input bg-muted px-2 py-1.5 text-xs"
+                aria-label="Status"
+              >
+                <option>{ar ? status.ar : status.en}</option>
+              </select>
+              <Link href={`/admin/matters/${matter.id}`}>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Eye className="h-3.5 w-3.5" />
+                  {ar ? "عرض" : "View"}
+                </Button>
+              </Link>
+            </div>
             <label className="mb-1 block text-xs font-semibold text-muted-foreground">
               {ar ? "اختر محامياً للإسناد" : "Select a lawyer to assign"}
             </label>

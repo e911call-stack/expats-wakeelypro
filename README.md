@@ -19,7 +19,13 @@ and production-ready for Vercel + Supabase.
 - **Phone OTP authentication** (Twilio or dev mode)
 - **Matter workflow** with 13 status stops, tasks, timeline, documents, messages, payments
 - **Lawyer workspace** with document review, fee setting, private notes
-- **Admin assign-lawyer UI** with auto-ranking
+- **Admin dashboard** (`/admin`) — matters, lawyers, users, payments, sources, services
+  - Matter list with assign-lawyer auto-ranking + server-side filters (search / status / assignment / needs-assignment, paginated)
+  - Read-only matter detail view (documents / tasks / timeline / messages / payments)
+  - Lawyer verification / availability / remote toggle + profile editing
+  - User search + role changes (self-role-change blocked)
+  - Payment list with status/kind filters + mark-paid
+  - Official sources full CRUD (soft-deactivate)
 - **Notifications system** with bell + unread badge
 - **Mobile-responsive** (iPhone SE → desktop)
 
@@ -89,7 +95,7 @@ All schema is in `prisma/schema.prisma`. Key models:
 ```
 src/
 ├── app/
-│   ├── api/                    # 19 API routes
+│   ├── api/                    # 40+ API routes
 │   │   ├── auth/otp/{request,verify}/
 │   │   ├── auth/{me,logout}/
 │   │   ├── legal/services/
@@ -97,13 +103,14 @@ src/
 │   │   ├── legal/matters/[id]/{status,assign,fees,timeline,documents,tasks,messages,payments}/
 │   │   ├── lawyer/matters/
 │   │   ├── lawyers/
-│   │   └── notifications/
+│   │   ├── notifications/
+│   │   └── admin/               # ADMIN-only area (services, matters, lawyers, users, payments, sources, practice-areas, seed)
 │   ├── auth/signin/            # Phone OTP sign-in page
 │   ├── intake/                 # 3-step guided intake wizard
 │   ├── services/               # Service catalog + detail
 │   ├── matters/                # Client matter list + dashboard
 │   ├── lawyer/                 # Lawyer dashboard + workspace
-│   ├── admin/matters/          # Admin assign-lawyer UI
+│   ├── admin/                  # Admin dashboard (matters, lawyers, users, payments, sources, services, settings)
 │   ├── notifications/          # Notifications page
 │   ├── page.tsx                # Homepage with CTA
 │   ├── layout.tsx              # Root layout (header + footer + providers)

@@ -1,18 +1,14 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
+import { sendSms, smsConfigured } from "@/lib/sms";
 
 /**
  * Phone OTP authentication.
  *
- * Generates a 6-digit code, stores it as an OtpChallenge, and "sends" it via
- * the configured SMS provider. In production, set up:
- *
- *   - TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_FROM
- *   - OR Vonage / MessageBird / any SMS provider
- *
- * Phase 1 ships with a console.log sender (dev mode). To enable real SMS,
- * implement `sendSms` below with your provider's SDK.
+ * Generates a 6-digit code, stores it as an OtpChallenge, and sends it via
+ * the Twilio SMS provider (see src/lib/sms.ts). When Twilio is not configured
+ * the code is logged to the console instead (dev mode).
  */
 
 const OTP_TTL_MINUTES = 5;
@@ -40,8 +36,7 @@ export async function createOtpChallenge(phone: string): Promise<{ code: string 
   await sendSms(phone, `Your Expats WakeelyPro verification code is: ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`);
 
   // In dev mode (no SMS provider configured), return the code so the UI can display it.
-  const isDevMode = !process.env.TWILIO_ACCOUNT_SID;
-  return { code: isDevMode ? code : null, expiresAt };
+  return { code: smsConfigured() ? null : code, expiresAt };
 }
 
 /**
@@ -76,39 +71,4 @@ export async function verifyOtpChallenge(phone: string, code: string): Promise<b
     data: { consumedAt: new Date() },
   });
   return true;
-}
-
-/**
- * Send an SMS. Override this with your SMS provider's SDK in production.
- */
-async function sendSms(to: string, body: string): Promise<void> {
-  const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-  const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-  const twilioFrom = process.env.TWILIO_PHONE_FROM;
-
-  if (twilioSid && twilioToken && twilioFrom) {
-    // Production: send via Twilio
-    try {
-      const res = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Basic " + Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64"),
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({ To: to, From: twilioFrom, Body: body }),
-        },
-      );
-      if (!res.ok) {
-        console.error("[sms] Twilio error:", await res.text());
-      }
-    } catch (e) {
-      console.error("[sms] Twilio failed:", e instanceof Error ? e.message : String(e));
-    }
-    return;
-  }
-
-  // Dev mode: just log to console
-  console.log(`\n[SMS] To: ${to}\n[SMS] Body: ${body}\n`);
 }

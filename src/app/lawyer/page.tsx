@@ -31,6 +31,16 @@ type Matter = {
   _count: { documents: number; tasks: number; timelineEvents: number; conversations: number };
   tasks: { id: string; titleAr: string; titleEn: string; status: string; dueDate: string | null; requiresPhysicalPresence: boolean }[];
   openTaskCount: number;
+  documentsAwaitingReview: number;
+  documents: { id: string; fileName: string; requirementSlug: string | null; reviewStatus: string | null; createdAt: string }[];
+  earnedJOD: number;
+};
+
+type Summary = {
+  openMatters: number;
+  openTasks: number;
+  awaitingReview: number;
+  earnedJOD: number;
 };
 
 const STATUS_LABEL: Record<string, { ar: string; en: string }> = {
@@ -66,6 +76,8 @@ export default function LawyerDashboardPage() {
   const { user, loading: sessionLoading } = useSession();
   const ar = locale === "ar";
   const [matters, setMatters] = useState<Matter[]>([]);
+  const [summary, setSummary] = useState<Summary>({ openMatters: 0, openTasks: 0, awaitingReview: 0, earnedJOD: 0 });
+  const [filter, setFilter] = useState<"all" | "needsReview" | "inProgress">("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,8 +87,11 @@ export default function LawyerDashboardPage() {
     }
     fetch("/api/lawyer/matters")
       .then((r) => r.json())
-      .then((d) => setMatters(d.matters ?? []))
-      .catch(() => setMatters([]))
+      .then((d) => {
+        setMatters(d.matters ?? []);
+        setSummary(d.summary ?? { openMatters: 0, openTasks: 0, awaitingReview: 0, earnedJOD: 0 });
+      })
+      .catch(() => { setMatters([]); })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -102,8 +117,11 @@ export default function LawyerDashboardPage() {
     );
   }
 
-  const openMatters = matters.filter((m) => !["delivered", "cancelled", "closed", "resolved"].includes(m.status));
-  const totalOpenTasks = matters.reduce((sum, m) => sum + m.openTaskCount, 0);
+  const visible = matters.filter((m) => {
+    if (filter === "needsReview") return m.documentsAwaitingReview > 0;
+    if (filter === "inProgress") return !["delivered", "cancelled", "closed", "resolved"].includes(m.status);
+    return true;
+  });
 
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
@@ -124,48 +142,68 @@ export default function LawyerDashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="py-4">
               <p className="text-xs text-muted-foreground">{ar ? "قضايا مفتوحة" : "Open matters"}</p>
-              <p className="mt-1 text-2xl font-bold">{openMatters.length}</p>
+              <p className="mt-1 text-2xl font-bold">{summary.openMatters}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="py-4">
               <p className="text-xs text-muted-foreground">{ar ? "مهام قائمة" : "Open tasks"}</p>
-              <p className="mt-1 text-2xl font-bold">{totalOpenTasks}</p>
+              <p className="mt-1 text-2xl font-bold">{summary.openTasks}</p>
+            </CardContent>
+          </Card>
+          <Card className={summary.awaitingReview > 0 ? "border-amber-500/60 bg-amber-500/5" : ""}>
+            <CardContent className="py-4">
+              <p className="text-xs text-muted-foreground">{ar ? "مستندات بانتظار مراجعتك" : "Documents awaiting review"}</p>
+              <p className={`mt-1 text-2xl font-bold ${summary.awaitingReview > 0 ? "text-amber-600" : ""}`}>{summary.awaitingReview}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="py-4">
-              <p className="text-xs text-muted-foreground">{ar ? "إجمالي القضايا" : "Total matters"}</p>
-              <p className="mt-1 text-2xl font-bold">{matters.length}</p>
+              <p className="text-xs text-muted-foreground">{ar ? "أتعاب مستلمة" : "Earned fees"}</p>
+              <p className="mt-1 text-2xl font-bold">{summary.earnedJOD} <span className="text-sm text-muted-foreground">JOD</span></p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Filter bar */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Button size="sm" variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
+            {ar ? "الكل" : "All"}
+          </Button>
+          <Button size="sm" variant={filter === "inProgress" ? "default" : "outline"} onClick={() => setFilter("inProgress")}>
+            {ar ? "مفتوحة" : "Open"}
+          </Button>
+          <Button size="sm" variant={filter === "needsReview" ? "default" : "outline"} className={filter === "needsReview" ? "" : "border-amber-500/50 text-amber-700"} onClick={() => setFilter("needsReview")}>
+            <FileText className="h-3.5 w-3.5" />
+            {ar ? "بانتظار مراجعة المستندات" : "Awaiting doc review"}
+          </Button>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : matters.length === 0 ? (
+        ) : visible.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Gavel className="mx-auto h-12 w-12 text-muted-foreground" />
               <h2 className="mt-4 text-lg font-bold">
-                {ar ? "لا قضايا مسندة إليك بعد" : "No matters assigned to you yet"}
+                {ar ? "لا قضايا ضمن هذا التصنيف" : "No matters in this view"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {ar
-                  ? "عندما يُسند إليك مشرف القضايا قضايا عن بُعد، ستظهر هنا."
-                  : "When the admin assigns remote matters to you, they will appear here."}
+                  ? "غيّر التصنيف أعلاه، أو انتظر إسناد قضايا عن بُعد إليك."
+                  : "Change the filter above, or wait for remote matters to be assigned to you."}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {matters.map((m) => {
+            {visible.map((m) => {
               const s = STATUS_LABEL[m.status] ?? { ar: m.status, en: m.status };
               const reTone = REMOTE_TONES[m.remoteEligibility] ?? "secondary";
               return (
@@ -177,6 +215,12 @@ export default function LawyerDashboardPage() {
                           <div className="mb-1 flex flex-wrap items-center gap-2">
                             <h3 className="text-base font-bold">{m.title}</h3>
                             <Badge>{ar ? s.ar : s.en}</Badge>
+                            {m.documentsAwaitingReview > 0 && (
+                              <Badge variant="warning" className="gap-1">
+                                <FileText className="h-3 w-3" />
+                                {m.documentsAwaitingReview} {ar ? "بانتظار المراجعة" : "to review"}
+                              </Badge>
+                            )}
                             <Badge variant={reTone} className="gap-1">
                               <Globe className="h-3 w-3" />
                               {remoteLabel(m.remoteEligibility, ar)}

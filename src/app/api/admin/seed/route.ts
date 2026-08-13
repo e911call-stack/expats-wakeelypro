@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireRole } from "@/lib/session-server";
 
 export const runtime = "nodejs";
 
 /**
  * POST /api/admin/seed
- * 
+ *
  * Seeds the database with Phase 1 legal services data.
  * Idempotent - safe to call multiple times.
- * 
- * SECURITY: In production, add authentication check here!
+ * ADMIN only.
  */
 export async function POST() {
+  const auth = await requireRole("ADMIN");
+  if ("status" in auth) return NextResponse.json({ error: auth.status === 401 ? "unauthorized" : "forbidden" }, { status: auth.status });
+  const session = auth.session;
+
   try {
     const results = await seedDatabase();
     return NextResponse.json({ 
@@ -31,8 +35,12 @@ export async function POST() {
 /**
  * GET /api/admin/seed
  * Returns current database status (counts of records)
+ * ADMIN only.
  */
 export async function GET() {
+  const auth = await requireRole("ADMIN");
+  if ("status" in auth) return NextResponse.json({ error: auth.status === 401 ? "unauthorized" : "forbidden" }, { status: auth.status });
+  const session = auth.session;
   try {
     const [servicesCount, practiceAreasCount, sourcesCount] = await Promise.all([
       prisma.legalService.count({ where: { isActive: true } }),

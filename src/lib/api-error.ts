@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { ZodError } from "zod";
 
 /**
  * Unified API error handler. Returns a client-safe 500 response with a requestId.
@@ -39,5 +40,18 @@ export function rateLimited(retryAfter: number | null) {
   return NextResponse.json(
     { error: "rate_limited", retryAfter },
     { status: 429, headers: { "Retry-After": String(retryAfter ?? 60) } },
+  );
+}
+
+export function validationError(error: ZodError) {
+  return NextResponse.json(
+    {
+      error: "validation_error",
+      issues: error.issues.map((i) => ({
+        path: i.path.join("."),
+        message: i.message,
+      })),
+    },
+    { status: 400 },
   );
 }

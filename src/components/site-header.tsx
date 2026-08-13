@@ -50,7 +50,7 @@ export function SiteHeader() {
     { href: "/services", label: t("nav.services"), icon: Briefcase },
     { href: "/matters", label: t("nav.matters"), icon: FileText },
     ...(user?.role === "LAWYER" ? [{ href: "/lawyer", label: t("nav.lawyer"), icon: Gavel }] : []),
-    ...(user?.role === "ADMIN" ? [{ href: "/admin/matters", label: locale === "ar" ? "إسناد المحامين" : "Assign Lawyers", icon: Shield }] : []),
+    ...(user?.role === "ADMIN" ? [{ href: "/admin", label: locale === "ar" ? "لوحة الإدارة" : "Admin", icon: Shield }] : []),
     ...(user ? [{ href: "/notifications", label: locale === "ar" ? "الإشعارات" : "Notifications", icon: BellIcon }] : []),
   ];
 
@@ -169,10 +169,10 @@ export function SiteHeader() {
                   </Link>
                 )}
                 {user.role === "ADMIN" && (
-                  <Link href="/admin/matters">
+                  <Link href="/admin">
                     <DropdownMenuItem>
                       <Shield className="me-2 h-3.5 w-3.5" />
-                      {locale === "ar" ? "إسناد المحامين" : "Assign Lawyers"}
+                      {locale === "ar" ? "لوحة الإدارة" : "Admin"}
                     </DropdownMenuItem>
                   </Link>
                 )}

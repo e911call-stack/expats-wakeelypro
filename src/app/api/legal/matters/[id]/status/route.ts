@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/session-server";
 import { handleApiError } from "@/lib/api-error";
 import { addTimelineEvent } from "@/lib/legal/matter-tasks";
+import { sendUserSms } from "@/lib/sms";
 
 export const runtime = "nodejs";
 
@@ -93,6 +94,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         metadata: { matterId, oldStatus, newStatus } as object,
       },
     });
+
+    await sendUserSms(
+      matter.clientId,
+      `Expats WakeelyPro: You matter "${matter.title}" is now "${labels.en}".`,
+    );
 
     return NextResponse.json({ ok: true, status: newStatus, oldStatus });
   } catch (e) {

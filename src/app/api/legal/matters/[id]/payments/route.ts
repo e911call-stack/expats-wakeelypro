@@ -4,6 +4,8 @@ import { requireSession } from "@/lib/session-server";
 import { handleApiError } from "@/lib/api-error";
 import { audit } from "@/lib/audit";
 import { addTimelineEvent } from "@/lib/legal/matter-tasks";
+import { requestPayment, CLIQ_PROVIDER_NAME } from "@/lib/payments/cliq";
+import { confirmPayment } from "@/lib/payments/confirm";
 
 export const runtime = "nodejs";
 
@@ -11,10 +13,13 @@ interface Params { params: Promise<{ id: string }> }
 
 /**
  * POST /api/legal/matters/[id]/payments
- * Records a payment against the matter. Phase 1 — simulates success.
- * In production, hook into your existing payment provider.
+ * Creates a PENDING payment and sends a CliQ payment request.
  *
- * Body: { kind: "platform_fee"|"lawyer_fee"|"government_fee"|"disbursement", amountJOD: number, description? }
+ * Body: { kind: "platform_fee"|"lawyer_fee"|"government_fee"|"disbursement", amountJOD: number, description?, alias? }
+ *
+ * When CliQ keys are not configured (sandbox) the payment is approved
+ * instantly; otherwise the response includes `checkoutUrl` and the payment
+ * flips to PAID via the CliQ webhook.
  */
 export async function POST(req: NextRequest, { params }: Params) {
   try {
@@ -47,34 +52,55 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     const description = body.description ? String(body.description) : null;
+    const alias = body.alias ? String(body.alias) : (session.phone ?? null);
 
-    // NOTE: In production, integrate with your existing Payment model + provider.
-    // This Phase 1 version records a simulated PAID payment.
+    // 1) Create a PENDING payment first.
     const payment = await prisma.payment.create({
       data: {
         userId: session.id,
         matterId,
         amountJOD,
         kind: kind as "platform_fee" | "lawyer_fee" | "government_fee" | "disbursement",
-        status: "PAID", // Phase 1: simulate immediate success
-        providerRef: `sim-${Date.now()}`,
-        providerName: "phase1-simulated",
+        status: "PENDING",
+        providerName: CLIQ_PROVIDER_NAME,
         description,
-        paidAt: new Date(),
       },
     });
 
-    await addTimelineEvent({
-      matterId, eventType: "payment_received",
-      titleAr: `تم استلام دفعة (${amountJOD} د.أ)`, titleEn: `Payment received (${amountJOD} JOD)`,
-      descriptionAr: description ?? kind, descriptionEn: description ?? kind,
-      actorId: session.id, actorRole: session.role === "LAWYER" ? "lawyer" : "client",
-      metadata: { paymentId: payment.id, kind, amountJOD },
+    // 2) Send the CliQ request-to-pay.
+    const cliq = await requestPayment({
+      amountJOD,
+      externalTransactionId: payment.id,
+      alias,
+      description,
+      callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/payments/cliq/webhook`,
     });
 
-    await audit("payment.received", "Payment", payment.id, { actorId: session.id, matterId, kind, amountJOD });
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { providerRef: cliq.providerRef },
+    });
 
-    return NextResponse.json({ payment }, { status: 201 });
+    await audit("payment.initiated", "Payment", payment.id, {
+      actorId: session.id, matterId, kind, amountJOD, provider: CLIQ_PROVIDER_NAME,
+    });
+
+    // 3) Sandbox (no keys): simulate instant approval.
+    if (!cliq.approvalRequired) {
+      const { payment: updated } = await confirmPayment(payment.id, {
+        providerRef: cliq.providerRef,
+        providerName: CLIQ_PROVIDER_NAME,
+        confirmedBy: session.id,
+      });
+      return NextResponse.json({ payment: { ...payment, status: updated.status, providerRef: cliq.providerRef }, status: updated.status }, { status: 201 });
+    }
+
+    // 4) Real CliQ: waiting for customer approval.
+    return NextResponse.json({
+      payment: { ...payment, providerRef: cliq.providerRef },
+      status: "PENDING",
+      checkoutUrl: cliq.checkoutUrl,
+    }, { status: 201 });
   } catch (e) {
     return handleApiError("legal-matters.payment", e);
   }

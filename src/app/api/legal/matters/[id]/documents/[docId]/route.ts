@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/session-server";
 import { handleApiError } from "@/lib/api-error";
 import { addTimelineEvent } from "@/lib/legal/matter-tasks";
+import { syncMatterDocumentsStatus } from "@/lib/legal/matter-documents";
+import { sendUserSms } from "@/lib/sms";
 
 export const runtime = "nodejs";
 
@@ -77,7 +79,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       },
     });
 
-    return NextResponse.json({ document: updated });
+    await sendUserSms(
+      matter.clientId,
+      `Expats WakeelyPro: Your document "${doc.fileName}" was ${label.en}${notes ? `: ${notes}` : ""}.`,
+    );
+
+    // Auto-advance / regress the matter's document phase based on the checklist.
+    const sync = await syncMatterDocumentsStatus(matterId);
+
+    return NextResponse.json({ document: updated, statusSync: sync });
   } catch (e) {
     return handleApiError("legal-matters.document-review", e);
   }

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/session-server";
 import { handleApiError } from "@/lib/api-error";
 import { addTimelineEvent } from "@/lib/legal/matter-tasks";
+import { syncMatterDocumentsStatus } from "@/lib/legal/matter-documents";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -72,7 +73,23 @@ export async function POST(req: NextRequest, { params }: Params) {
       metadata: { documentId: doc.id, fileName, requirementSlug },
     });
 
-    return NextResponse.json({ document: doc }, { status: 201 });
+    // Notify the assigned lawyer a new document needs review.
+    if (matter.lawyerId && isClient) {
+      await prisma.notification.create({
+        data: {
+          userId: matter.lawyerId, kind: "document_uploaded",
+          title: `New document to review: ${fileName}`,
+          body: `"${fileName}" was uploaded by the client on matter "${matter.title}".`,
+          link: `/lawyer/matters/${matterId}`,
+          metadata: { matterId, documentId: doc.id, fileName } as object,
+        },
+      });
+    }
+
+    // Keep the matter's document phase in sync with the checklist.
+    const sync = await syncMatterDocumentsStatus(matterId);
+
+    return NextResponse.json({ document: doc, statusSync: sync }, { status: 201 });
   } catch (e) {
     return handleApiError("legal-matters.document-upload", e);
   }

@@ -62,6 +62,7 @@ type Matter = {
   documents: {
     id: string; fileName: string; fileUrl: string; fileType: string; fileSize: number;
     description: string | null; requirementSlug: string | null; createdAt: string;
+    reviewStatus: string | null; reviewNotes: string | null;
   }[];
   tasks: {
     id: string; titleAr: string; titleEn: string;
@@ -641,6 +642,8 @@ function DocumentsPanel({ matter, ar, onUpdated, canUpload }: {
                   <p className="text-xs text-muted-foreground">
                     {new Date(d.createdAt).toLocaleDateString(ar ? "ar-JO" : "en-US")}
                     {d.requirementSlug && ` · ${d.requirementSlug}`}
+                    {d.reviewStatus && ` · ${docReviewLabel(d.reviewStatus, ar)}`}
+                    {d.reviewNotes && <span className="block text-[10px] text-amber-700">“{d.reviewNotes}”</span>}
                   </p>
                 </div>
                 {d.fileUrl.startsWith("data:") ? (
@@ -735,16 +738,31 @@ function PaymentsPanel({ matter, ar, onUpdated, canPay }: {
   matter: Matter; ar: boolean; onUpdated: () => void; canPay: boolean;
 }) {
   const [paying, setPaying] = useState<string | null>(null);
+  const [payMsg, setPayMsg] = useState<string | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   async function pay(kind: "platform_fee" | "lawyer_fee" | "government_fee", amount: number) {
     setPaying(kind);
+    setPayMsg(null);
+    setCheckoutUrl(null);
     try {
-      await fetch(`/api/legal/matters/${matter.id}/payments`, {
+      const res = await fetch(`/api/legal/matters/${matter.id}/payments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind, amountJOD: amount }),
       });
-      onUpdated();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || "payment_failed");
+      if (data.checkoutUrl) {
+        setCheckoutUrl(data.checkoutUrl);
+        setPayMsg(ar
+          ? "تم إنشاء طلب الدفع عبر CliQ — أكّد الدفع في تطبيق بنكك، ثم عُد لتحديث الصفحة."
+          : "CliQ payment request created — approve it in your banking app, then refresh.");
+      } else {
+        onUpdated();
+      }
+    } catch (e) {
+      setPayMsg(e instanceof Error ? e.message : "payment_failed");
     } finally {
       setPaying(null);
     }
@@ -773,6 +791,17 @@ function PaymentsPanel({ matter, ar, onUpdated, canPay }: {
           <PaymentBox ar={ar} labelAr="رسوم المحامي" labelEn="Lawyer fee" amount={matter.lawyerFeeJOD} paid={lawyerPaid} canPay={canPay} paying={paying === "lawyer_fee"} onPay={() => pay("lawyer_fee", matter.lawyerFeeJOD)} />
           <PaymentBox ar={ar} labelAr="رسوم حكومية (تُدفع للجهة)" labelEn="Government fee (to authority)" amount={matter.governmentFeeJOD} paid={govPaid} canPay={canPay} paying={paying === "government_fee"} onPay={() => pay("government_fee", matter.governmentFeeJOD)} />
         </div>
+
+        {payMsg && (
+          <Alert variant={checkoutUrl ? "default" : "destructive"}>
+            <AlertDescription className="text-sm">{payMsg}</AlertDescription>
+            {checkoutUrl && (
+              <a href={checkoutUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-primary underline">
+                {ar ? "فتح صفحة الدفع" : "Open payment page"}
+              </a>
+            )}
+          </Alert>
+        )}
 
         {matter.payments.length > 0 && (
           <div>
@@ -874,5 +903,15 @@ function paymentKindLabel(k: string, ar: boolean): string {
     disbursement: { ar: "مصروف", en: "Disbursement" },
   };
   const v = m[k] ?? { ar: k, en: k };
+  return ar ? v.ar : v.en;
+}
+function docReviewLabel(s: string, ar: boolean): string {
+  const m: Record<string, { ar: string; en: string }> = {
+    pending: { ar: "بانتظار المراجعة", en: "Pending review" },
+    approved: { ar: "موافق عليه", en: "Approved" },
+    rejected: { ar: "مرفوض", en: "Rejected" },
+    needs_resubmission: { ar: "يحتاج إعادة رفع", en: "Needs resubmission" },
+  };
+  const v = m[s] ?? { ar: s, en: s };
   return ar ? v.ar : v.en;
 }

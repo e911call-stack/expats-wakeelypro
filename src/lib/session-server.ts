@@ -13,13 +13,16 @@ export async function requireSession(): Promise<SessionPayload | null> {
 }
 
 /**
- * Require a specific role. Returns null if not authenticated or not authorized.
+ * Require a specific role.
+ * Returns `{ session }` on success, or `{ status: 401 }` (unauthenticated) /
+ * `{ status: 403 }` (authenticated but wrong role) so callers can respond with
+ * the correct HTTP code.
  */
 export async function requireRole(
   ...roles: SessionPayload["role"][]
-): Promise<SessionPayload | null> {
+): Promise<{ session: SessionPayload } | { status: 401 | 403 }> {
   const session = await verifySession();
-  if (!session) return null;
-  if (!roles.includes(session.role)) return null;
-  return session;
+  if (!session) return { status: 401 };
+  if (!roles.includes(session.role)) return { status: 403 };
+  return { session };
 }
