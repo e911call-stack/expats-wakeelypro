@@ -1200,3 +1200,31 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   .landing-disclaimer-accept,
   .landing-disclaimer-decline { min-height: 30px; height: 30px; font-size: .65rem; }
 }
+
+/* Keep the blocking gate anchored to the viewport, not the page scroll position. */
+.landing-disclaimer-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.landing-disclaimer-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.landing-disclaimer-language { flex: 0 0 auto; }
+@supports selector(body:has(*)) {
+  body:has(.landing-disclaimer-gate) { overflow: hidden; }
+}
+@media (max-width: 640px) {
+  .landing-disclaimer-gate { min-height: 100svh; height: 100svh; }
+}
+
+/* Keep the notice content at the card top so the fixed viewport card has no misleading empty band. */
+.landing-disclaimer-card { justify-content: flex-start; }
