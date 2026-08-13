@@ -219,6 +219,11 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
     window.sessionStorage.setItem(LANDING_DISCLAIMER_SESSION_KEY, "true");
     setDisclaimerAccepted(true);
   };
+
+  const declineDisclaimer = () => {
+    window.sessionStorage.removeItem(LANDING_DISCLAIMER_SESSION_KEY);
+    window.location.replace("about:blank");
+  };
   const closeMenu = () => setMenuOpen(false);
   const openIntake = () => window.location.assign("/intake");
   const changeLanguage = (nextLanguage: Language) => {
@@ -260,7 +265,7 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
   }, []);
 
   if (!disclaimerReady || !disclaimerAccepted) {
-    return <LandingDisclaimerGate onAccept={acceptDisclaimer} />;
+    return <LandingDisclaimerGate onAccept={acceptDisclaimer} onDecline={declineDisclaimer} />;
   }
 
   return (
