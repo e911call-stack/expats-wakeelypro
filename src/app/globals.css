@@ -840,3 +840,115 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
 :where(.bg-emerald-100, .bg-emerald-200) { background-color: #d6edf3 !important; }
 :where(.border-emerald-500, .border-emerald-600) { border-color: #006c8e !important; }
 :where(.ring-emerald-500, .ring-emerald-600) { --tw-ring-color: #006c8e !important; }
+
+
+/* Blocking Arabic disclaimer gate shown before landing-page content mounts. */
+.landing-disclaimer-gate {
+  min-height: 100svh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #fdf7e3;
+  color: #201f1c;
+  overflow: auto;
+}
+
+.landing-disclaimer-card {
+  width: min(720px, 100%);
+  padding: clamp(28px, 6vw, 64px);
+  border: 1px solid rgba(0, 108, 142, 0.28);
+  border-radius: 24px;
+  background: #fffdf5;
+  box-shadow: 0 24px 80px rgba(32, 31, 28, 0.14);
+  text-align: right;
+}
+
+.landing-disclaimer-icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 22px;
+  border-radius: 16px;
+  background: #006c8e;
+  color: #fdf7e3;
+}
+
+.landing-disclaimer-kicker {
+  margin: 0 0 8px;
+  color: #006c8e;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.landing-disclaimer-card h1 {
+  margin: 0 0 22px;
+  color: #201f1c;
+  font-family: "Tajawal", sans-serif;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.landing-disclaimer-copy {
+  color: #4d4a42;
+  font-family: "Tajawal", sans-serif;
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+  font-weight: 500;
+  line-height: 2;
+}
+
+.landing-disclaimer-copy p {
+  margin: 0 0 18px;
+}
+
+.landing-disclaimer-copy p:last-child {
+  margin-bottom: 28px;
+  color: #201f1c;
+  font-weight: 700;
+}
+
+.landing-disclaimer-accept {
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  border-radius: 12px;
+  background: #006c8e;
+  color: #fff;
+  cursor: pointer;
+  font-family: "Tajawal", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.landing-disclaimer-accept:hover {
+  background: #005873;
+  box-shadow: 0 10px 24px rgba(0, 108, 142, 0.22);
+  transform: translateY(-1px);
+}
+
+.landing-disclaimer-accept:focus-visible {
+  outline: 3px solid rgba(0, 108, 142, 0.32);
+  outline-offset: 4px;
+}
+
+@media (max-width: 560px) {
+  .landing-disclaimer-gate {
+    align-items: start;
+    padding: 16px;
+  }
+
+  .landing-disclaimer-card {
+    margin: auto 0;
+    padding: 26px 20px 22px;
+    border-radius: 18px;
+  }
+
+  .landing-disclaimer-copy {
+    font-size: 1rem;
+    line-height: 1.9;
+  }
+}

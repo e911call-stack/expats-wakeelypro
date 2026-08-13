@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { LandingDisclaimerGate, LANDING_DISCLAIMER_SESSION_KEY } from "@/components/landing-disclaimer-gate";
 
 const markAsset = "/expat-legal-services-logo.png";
 const heroAsset = "/manus-storage/wakeely-hero-editorial.svg";
@@ -187,6 +188,8 @@ function Brand({ language }: { language: Language }) {
 }
 
 export default function Home({ initialLanguage }: { initialLanguage?: Language }) {
+  const [disclaimerReady, setDisclaimerReady] = useState(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [language, setLanguage] = useState<Language>(() => {
     if (initialLanguage) return initialLanguage;
     if (typeof window === "undefined") return "ar";
@@ -206,6 +209,16 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
   const isArabic = language === "ar";
   const t = text[language];
   const DirectionArrow = isArabic ? ArrowLeft : ArrowRight;
+
+  useEffect(() => {
+    setDisclaimerAccepted(window.sessionStorage.getItem(LANDING_DISCLAIMER_SESSION_KEY) === "true");
+    setDisclaimerReady(true);
+  }, []);
+
+  const acceptDisclaimer = () => {
+    window.sessionStorage.setItem(LANDING_DISCLAIMER_SESSION_KEY, "true");
+    setDisclaimerAccepted(true);
+  };
   const closeMenu = () => setMenuOpen(false);
   const openIntake = () => window.location.assign("/intake");
   const changeLanguage = (nextLanguage: Language) => {
@@ -245,6 +258,10 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
     document.body.classList.add("landing-active");
     return () => document.body.classList.remove("landing-active");
   }, []);
+
+  if (!disclaimerReady || !disclaimerAccepted) {
+    return <LandingDisclaimerGate onAccept={acceptDisclaimer} />;
+  }
 
   return (
     <div ref={pageRef} className={`wakeely-page ${isArabic ? "is-arabic" : "is-english"}`} dir={isArabic ? "rtl" : "ltr"} lang={language} id="top">
