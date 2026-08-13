@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLocale } from "@/lib/locale-provider";
+import { ServiceProviderNotice, AIUsageNotice } from "@/components/legal-disclaimer";
 import { useSession } from "@/lib/session-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -341,7 +342,9 @@ export default function ServiceDetailPage() {
         </Card>
       )}
 
-      {/* CTA */}
+      {/* Contextual legal notices and CTA */}
+      <ServiceProviderNotice className="mb-4" />
+      <AIUsageNotice className="mb-4" />
       <Card>
         <CardContent className="space-y-3 py-6">
           {user ? (

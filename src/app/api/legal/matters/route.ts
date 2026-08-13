@@ -5,6 +5,7 @@ import { handleApiError } from "@/lib/api-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { audit } from "@/lib/audit";
 import { cloneTasksForMatter, recomputeMatterProgress, addTimelineEvent } from "@/lib/legal/matter-tasks";
+import { DISCLAIMER_VERSION } from "@/lib/legal-disclaimer";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -60,6 +61,10 @@ export async function POST(req: NextRequest) {
     const intakeId = body.intakeId ? String(body.intakeId) : null;
     const facts = body.facts ? String(body.facts) : null;
     const urgency = body.urgency === "low" || body.urgency === "medium" || body.urgency === "high" ? body.urgency : null;
+    if (body.disclaimerAcknowledged !== true) {
+      return NextResponse.json({ error: "disclaimer_acknowledgment_required", disclaimerVersion: DISCLAIMER_VERSION }, { status: 400 });
+    }
+    const disclaimerVersion = String(body.disclaimerVersion ?? DISCLAIMER_VERSION);
 
     if (title.length < 5 || title.length > 200) return NextResponse.json({ error: "title_length", min: 5, max: 200 }, { status: 400 });
     if (!legalServiceId) return NextResponse.json({ error: "legalServiceId required" }, { status: 400 });
@@ -125,6 +130,14 @@ export async function POST(req: NextRequest) {
       metadata: { serviceSlug: service.slug, taskCount },
     });
     await addTimelineEvent({
+      matterId: matter.id, eventType: "legal_disclaimer_acknowledged",
+      titleAr: "تم تأكيد فهم التنبيه القانوني", titleEn: "Legal disclaimer acknowledged",
+      descriptionAr: "أقر العميل بأن المنصة تقنية وأن الخدمات القانونية يقدمها محامٍ مستقل مرخّص.",
+      descriptionEn: "Client acknowledged that the platform is technology and legal services are provided by an independent licensed lawyer.",
+      actorId: session.id, actorRole: "client",
+      metadata: { disclaimerVersion },
+    });
+    await addTimelineEvent({
       matterId: matter.id, eventType: "remote_eligibility_set",
       titleAr: "تم تحديد أهلية المعاملة عن بُعد", titleEn: "Remote eligibility determined",
       descriptionAr: procedure?.remoteEligibilityReasonAr ?? null,
@@ -139,7 +152,7 @@ export async function POST(req: NextRequest) {
       await prisma.legalIntake.update({ where: { id: intakeId }, data: { matterId: matter.id } });
     }
 
-    await audit("matter.created", "LegalMatter", matter.id, { actorId: session.id, intakeId });
+    await audit("matter.created", "LegalMatter", matter.id, { actorId: session.id, intakeId, disclaimerAcknowledged: true, disclaimerVersion });
 
     return NextResponse.json({ matter: { id: matter.id, taskCount } }, { status: 201 });
   } catch (e) {

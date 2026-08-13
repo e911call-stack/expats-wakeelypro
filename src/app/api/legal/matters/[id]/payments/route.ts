@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/session-server";
 import { handleApiError } from "@/lib/api-error";
 import { audit } from "@/lib/audit";
 import { addTimelineEvent } from "@/lib/legal/matter-tasks";
+import { DISCLAIMER_VERSION } from "@/lib/legal-disclaimer";
 import { requestPayment, CLIQ_PROVIDER_NAME } from "@/lib/payments/cliq";
 import { confirmPayment } from "@/lib/payments/confirm";
 
@@ -40,6 +41,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     const body = await req.json().catch(() => ({}));
+    if (body.disclaimerAcknowledged !== true) {
+      return NextResponse.json({ error: "disclaimer_acknowledgment_required", disclaimerVersion: DISCLAIMER_VERSION }, { status: 400 });
+    }
+    const disclaimerVersion = String(body.disclaimerVersion ?? DISCLAIMER_VERSION);
     const validKinds = ["platform_fee", "lawyer_fee", "government_fee", "disbursement"];
     const kind = String(body.kind ?? "platform_fee");
     if (!validKinds.includes(kind)) {
@@ -82,7 +87,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     await audit("payment.initiated", "Payment", payment.id, {
-      actorId: session.id, matterId, kind, amountJOD, provider: CLIQ_PROVIDER_NAME,
+      actorId: session.id, matterId, kind, amountJOD, provider: CLIQ_PROVIDER_NAME, disclaimerAcknowledged: true, disclaimerVersion,
     });
 
     // 3) Sandbox (no keys): simulate instant approval.

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/locale-provider";
 import { useSession } from "@/lib/session-provider";
 import { Button } from "@/components/ui/button";
+import { LegalNotice, AIUsageNotice, LawyerEngagementDisclaimer } from "@/components/legal-disclaimer";
+import { DISCLAIMER_VERSION } from "@/lib/legal-disclaimer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -116,6 +118,7 @@ export default function IntakePage() {
   const [error, setError] = useState<string | null>(null);
   const [intakeId, setIntakeId] = useState<string | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+  const [engagementAcknowledged, setEngagementAcknowledged] = useState(false);
 
   function pickPreset(slug: string) {
     const preset = NEED_PRESETS.find((p) => p.slug === slug);
@@ -180,6 +183,10 @@ export default function IntakePage() {
 
   async function createMatter() {
     if (!intakeId || !recommendation) return;
+    if (!engagementAcknowledged) {
+      setError(ar ? "يرجى تأكيد فهمك لطبيعة العلاقة مع المحامي قبل المتابعة." : "Please acknowledge the independent-lawyer relationship before continuing.");
+      return;
+    }
     setError(null);
     try {
       const res = await fetch("/api/legal/matters", {
@@ -199,6 +206,8 @@ export default function IntakePage() {
           lawyerFeeJOD: recommendation.service.lawyerFeeMin,
           governmentFeeJOD: recommendation.service.governmentFeeEstimate,
           governmentFeeIncluded: false,
+          disclaimerAcknowledged: true,
+          disclaimerVersion: DISCLAIMER_VERSION,
           feeNotesAr: recommendation.service.governmentFeeNoteAr,
           feeNotesEn: recommendation.service.governmentFeeNoteEn,
         }),
@@ -225,6 +234,7 @@ export default function IntakePage() {
     setError(null);
     setIntakeId(null);
     setRecommendation(null);
+    setEngagementAcknowledged(false);
   }
 
   if (!user) {
@@ -258,6 +268,7 @@ export default function IntakePage() {
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
       <div className="mx-auto max-w-3xl">
+        <LegalNotice className="mb-4" />
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
             <Sparkles className="h-6 w-6" />
@@ -503,6 +514,8 @@ export default function IntakePage() {
                 onRestart={restart}
                 userCountry={country}
                 userStatus={status}
+                engagementAcknowledged={engagementAcknowledged}
+                onEngagementAcknowledged={setEngagementAcknowledged}
               />
             ) : (
               <NoMatchView ar={ar} onRestart={restart} />
@@ -516,11 +529,11 @@ export default function IntakePage() {
 }
 
 function RecommendationView({
-  rec, ar, onCreateMatter, onRestart, userCountry, userStatus,
+  rec, ar, onCreateMatter, onRestart, userCountry, userStatus, engagementAcknowledged, onEngagementAcknowledged,
 }: {
   rec: Recommendation; ar: boolean;
   onCreateMatter: () => void; onRestart: () => void;
-  userCountry: string; userStatus: string;
+  userCountry: string; userStatus: string; engagementAcknowledged: boolean; onEngagementAcknowledged: (checked: boolean) => void;
 }) {
   const reLabel = REMOTE_LABEL[rec.remoteEligibility] ?? REMOTE_LABEL.unknown;
   const reTone = REMOTE_TONES[rec.remoteEligibility] ?? "secondary";
@@ -710,21 +723,16 @@ function RecommendationView({
       {/* CTA */}
       <Card>
         <CardContent className="space-y-3 py-6">
-          <Button onClick={onCreateMatter} className="w-full gap-2" size="lg">
+          <LawyerEngagementDisclaimer checked={engagementAcknowledged} onCheckedChange={onEngagementAcknowledged} />
+          <AIUsageNotice />
+          <Button onClick={onCreateMatter} disabled={!engagementAcknowledged} className="w-full gap-2" size="lg">
             <KeyRound className="h-4 w-4" />
             {ar ? "إنشاء قضية وبدء المتابعة" : "Create matter and start tracking"}
           </Button>
           <Button onClick={onRestart} variant="ghost" className="w-full">
             {ar ? "ابدأ توجيهاً جديداً" : "Start a new intake"}
           </Button>
-          <Alert>
-            <ShieldAlert className="h-4 w-4" />
-            <AlertDescription className="text-xs">
-              {ar
-                ? "الذكاء الاصطناعي للتنقّي فقط — لا يقدم استشارة قانونية. العمل الفعلي يقوم به محامٍ مرخص."
-                : "AI is for navigation only — it does not provide legal advice. Actual work is done by a licensed lawyer."}
-            </AlertDescription>
-          </Alert>
+
         </CardContent>
       </Card>
     </>

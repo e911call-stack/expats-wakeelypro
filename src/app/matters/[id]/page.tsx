@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { LawyerIndependentNotice, LawyerEngagementDisclaimer, AIUsageNotice } from "@/components/legal-disclaimer";
+import { DISCLAIMER_VERSION } from "@/lib/legal-disclaimer";
 import {
   ArrowLeft, ArrowRight, Clock, FileText, Globe, Landmark, Scale, ShieldAlert, ShieldCheck,
   CheckCircle2, Circle, Loader2, MessageSquare, Send, Upload, Gavel, Building2, ScrollText,
@@ -740,6 +742,7 @@ function PaymentsPanel({ matter, ar, onUpdated, canPay }: {
   const [paying, setPaying] = useState<string | null>(null);
   const [payMsg, setPayMsg] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false);
 
   async function pay(kind: "platform_fee" | "lawyer_fee" | "government_fee", amount: number) {
     setPaying(kind);
@@ -749,7 +752,7 @@ function PaymentsPanel({ matter, ar, onUpdated, canPay }: {
       const res = await fetch(`/api/legal/matters/${matter.id}/payments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, amountJOD: amount }),
+        body: JSON.stringify({ kind, amountJOD: amount, disclaimerAcknowledged: true, disclaimerVersion: DISCLAIMER_VERSION }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || data.error || "payment_failed");
@@ -786,10 +789,13 @@ function PaymentsPanel({ matter, ar, onUpdated, canPay }: {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <LawyerIndependentNotice />
+        <LawyerEngagementDisclaimer checked={disclaimerAcknowledged} onCheckedChange={setDisclaimerAcknowledged} />
+        <AIUsageNotice />
         <div className="grid gap-2 sm:grid-cols-3">
-          <PaymentBox ar={ar} labelAr="رسوم المنصة" labelEn="Platform fee" amount={matter.platformFeeJOD} paid={platformPaid} canPay={canPay} paying={paying === "platform_fee"} onPay={() => pay("platform_fee", matter.platformFeeJOD)} />
-          <PaymentBox ar={ar} labelAr="رسوم المحامي" labelEn="Lawyer fee" amount={matter.lawyerFeeJOD} paid={lawyerPaid} canPay={canPay} paying={paying === "lawyer_fee"} onPay={() => pay("lawyer_fee", matter.lawyerFeeJOD)} />
-          <PaymentBox ar={ar} labelAr="رسوم حكومية (تُدفع للجهة)" labelEn="Government fee (to authority)" amount={matter.governmentFeeJOD} paid={govPaid} canPay={canPay} paying={paying === "government_fee"} onPay={() => pay("government_fee", matter.governmentFeeJOD)} />
+          <PaymentBox ar={ar} labelAr="رسوم المنصة" labelEn="Platform fee" amount={matter.platformFeeJOD} paid={platformPaid} canPay={canPay && disclaimerAcknowledged} paying={paying === "platform_fee"} onPay={() => pay("platform_fee", matter.platformFeeJOD)} />
+          <PaymentBox ar={ar} labelAr="رسوم المحامي" labelEn="Lawyer fee" amount={matter.lawyerFeeJOD} paid={lawyerPaid} canPay={canPay && disclaimerAcknowledged} paying={paying === "lawyer_fee"} onPay={() => pay("lawyer_fee", matter.lawyerFeeJOD)} />
+          <PaymentBox ar={ar} labelAr="رسوم حكومية (تُدفع للجهة)" labelEn="Government fee (to authority)" amount={matter.governmentFeeJOD} paid={govPaid} canPay={canPay && disclaimerAcknowledged} paying={paying === "government_fee"} onPay={() => pay("government_fee", matter.governmentFeeJOD)} />
         </div>
 
         {payMsg && (

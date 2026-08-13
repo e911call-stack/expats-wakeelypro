@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/lib/locale-provider";
+import { LawyerIndependentNotice, AIUsageNotice } from "@/components/legal-disclaimer";
 import { useSession } from "@/lib/session-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -126,6 +127,10 @@ export default function LawyerDashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
       <div className="mx-auto max-w-5xl">
+        <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          <LawyerIndependentNotice />
+          <AIUsageNotice />
+        </div>
         <div className="mb-6">
           <Badge variant="secondary" className="mb-2 gap-1">
             <Gavel className="h-3 w-3" />

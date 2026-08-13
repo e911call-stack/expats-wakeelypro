@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { LegalNotice } from "@/components/legal-disclaimer";
 import { LocaleProvider } from "@/lib/locale-provider";
 import { SessionProvider } from "@/lib/session-provider";
 import { SiteHeader } from "@/components/site-header";
@@ -63,12 +64,7 @@ function Footer() {
         <p>
           <strong className="text-foreground">Jordan Remote Legal Services</strong> — Phase 1 MVP · Bilingual (AR/EN)
         </p>
-        <p>
-          <strong className="text-foreground">English:</strong> For demonstration only — no real legal advice is provided. AI is for navigation only. All legal work is performed by licensed Jordanian lawyers and official Jordanian authorities. This platform does not provide electronic signatures or e-notary services. Government fees are always paid directly to the relevant authority.
-        </p>
-        <p dir="rtl">
-          <strong className="text-foreground">العربية:</strong> لأغراض العرض التوضيحي فقط — لا يتم تقديم استشارة قانونية حقيقية. الذكاء الاصطناعي للتنقّي فقط. جميع الأعمال القانونية يقوم بها محامون أردنيون مرخصون وجهات أردنية رسمية. هذه المنصة لا تقدم توقيعات إلكترونية ولا خدمات توثيق إلكتروني. رسوم الجهات الحكومية تُدفع مباشرة للجهة المعنية.
-        </p>
+        <LegalNotice />
       </div>
     </footer>
   );

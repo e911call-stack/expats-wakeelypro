@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/lib/locale-provider";
+import { LegalNotice } from "@/components/legal-disclaimer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export default function ServicesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
+      <LegalNotice className="mb-6" />
       <div className="mb-8">
         <Badge variant="secondary" className="mb-2">{ar ? "كتالوج الخدمات" : "Service catalog"}</Badge>
         <h1 className="text-2xl font-bold sm:text-3xl">
