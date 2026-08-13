@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/locale-provider";
 import { useSession } from "@/lib/session-provider";
@@ -109,6 +109,9 @@ export default function IntakePage() {
   const ar = locale === "ar";
 
   const [step, setStep] = useState<Step>("where");
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
   const [status, setStatus] = useState<string>("");
@@ -119,6 +122,14 @@ export default function IntakePage() {
   const [intakeId, setIntakeId] = useState<string | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [engagementAcknowledged, setEngagementAcknowledged] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const selectedSlug = params.get("service");
+    const prompt = ar ? params.get("promptAr") : params.get("promptEn");
+    if (selectedSlug) setNeedPreset(selectedSlug);
+    if (prompt) setNeedText(prompt);
+  }, [ar]);
 
   function pickPreset(slug: string) {
     const preset = NEED_PRESETS.find((p) => p.slug === slug);
@@ -160,6 +171,10 @@ export default function IntakePage() {
         body: JSON.stringify({
           text: needText,
           language: locale,
+          clientName: clientName.trim() || undefined,
+          clientPhone: clientPhone.trim() || undefined,
+          clientEmail: clientEmail.trim() || undefined,
+          selectedServiceSlug: needPreset || undefined,
           clientCountry: country || undefined,
           clientCity: city || undefined,
           clientStatus: status || undefined,
@@ -225,6 +240,9 @@ export default function IntakePage() {
 
   function restart() {
     setStep("where");
+    setClientName("");
+    setClientPhone("");
+    setClientEmail("");
     setCountry("");
     setCity("");
     setStatus("");
@@ -332,8 +350,22 @@ export default function IntakePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="clientName">{ar ? "الاسم الكامل" : "Full name"}</Label>
+                  <Input id="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder={ar ? "اكتب اسمك الكامل" : "Enter your full name"} />
+                </div>
+                <div>
+                  <Label htmlFor="clientPhone">{ar ? "رقم الهاتف / واتساب" : "Phone / WhatsApp"}</Label>
+                  <Input id="clientPhone" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder={ar ? "+962 …" : "+962 …"} />
+                </div>
+                <div>
+                  <Label htmlFor="clientEmail">{ar ? "البريد الإلكتروني" : "Email"}</Label>
+                  <Input id="clientEmail" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder={ar ? "name@example.com" : "name@example.com"} />
+                </div>
+              </div>
               <div>
-                <Label htmlFor="country">{ar ? "الدولة" : "Country"}</Label>
+                <Label htmlFor="country">{ar ? "الدولة التي تقيم فيها" : "Country of residence"}</Label>
                 <select
                   id="country"
                   value={country}
@@ -356,7 +388,7 @@ export default function IntakePage() {
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button onClick={() => setStep("status")} disabled={!country}>
+                <Button onClick={() => setStep("status")} disabled={!clientName.trim() || !clientPhone.trim() || !country}>
                   {ar ? "التالي" : "Next"}
                   {ar ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                 </Button>
@@ -452,6 +484,7 @@ export default function IntakePage() {
                     : "Example: I want to sell my apartment in Amman. I'm in the US and cannot travel to Jordan."}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">{needText.length} / 8000</p>
+                {needPreset && <p className="rounded-md bg-primary/5 px-3 py-2 text-xs text-primary">{ar ? "الإجراء المختار محفوظ في طلبك." : "Your selected procedure is attached to this intake."}</p>}
               </div>
               <div>
                 <Label>{ar ? "الإلحاح" : "Urgency"}</Label>

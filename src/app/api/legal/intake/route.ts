@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const text = String(body.text ?? "").trim();
     const language = (body.language === "en" ? "en" : "ar") as "ar" | "en";
+    const clientName = body.clientName ? String(body.clientName).trim().slice(0, 160) : null;
+    const clientPhone = body.clientPhone ? String(body.clientPhone).trim().slice(0, 80) : null;
+    const clientEmail = body.clientEmail ? String(body.clientEmail).trim().slice(0, 180) : null;
+    const selectedServiceSlug = body.selectedServiceSlug ? String(body.selectedServiceSlug).trim().slice(0, 120) : null;
     const clientCountry = body.clientCountry ? String(body.clientCountry) : null;
     const clientCity = body.clientCity ? String(body.clientCity) : null;
     const clientStatus = body.clientStatus ? String(body.clientStatus) : null;
@@ -85,6 +89,7 @@ export async function POST(req: NextRequest) {
         language,
         rawText: text,
         structured: {
+          clientName, clientPhone, clientEmail, selectedServiceSlug,
           clientCountry, clientCity, clientStatus,
           practiceAreaSlug, jurisdictionCode, urgency,
         } as object,
