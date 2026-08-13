@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const markAsset = "/WakeelyProLog.png";
+const markAsset = "/expat-legal-services-logo.png";
 const heroAsset = "/manus-storage/wakeely-hero-editorial.svg";
 const servicesAsset = "/manus-storage/wakeely-services.svg";
 const bridgeAsset = "/manus-storage/wakeely-bridge.svg";
@@ -181,8 +181,7 @@ function Brand({ language }: { language: Language }) {
   const t = text[language];
   return (
     <a className="brand" href="#top" aria-label={t.brand}>
-      <span className="brand-mark brand-logo"><img src={markAsset} alt="WakeelyPro" /></span>
-      <span className="brand-copy"><strong>{t.brand}</strong><small>{t.englishBrand}</small></span>
+      <img className="brand-image" src={markAsset} alt={t.brand} />
     </a>
   );
 }
@@ -194,6 +193,7 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
     return window.localStorage.getItem("wakeely-language") === "en" ? "en" : "ar";
   });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const toggleTheme = () => {
     setTheme((current) => {
@@ -215,6 +215,18 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
   };
 
   useEffect(() => { window.localStorage.setItem("wakeely-language", language); }, [language]);
+
+  const slides = [
+    { src: heroAsset, alt: isArabic ? "ملف معاملة قانونية أردنية" : "A Jordanian legal transaction file", code: "01" },
+    { src: routeAsset, alt: isArabic ? "مسار المعاملة القانونية" : "Legal transaction route", code: "02" },
+    { src: servicesAsset, alt: isArabic ? "ملف خدمة قانونية" : "Legal service file", code: "03" },
+    { src: bridgeAsset, alt: isArabic ? "خدمات قانونية عن بعد" : "Remote legal services", code: "04" },
+  ];
+
+  useEffect(() => {
+    const id = window.setInterval(() => setActiveSlide((current) => (current + 1) % slides.length), 5000);
+    return () => window.clearInterval(id);
+  }, [slides.length]);
 
   useEffect(() => {
     const root = pageRef.current;
@@ -255,7 +267,6 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
             <button className="mobile-menu-toggle" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={21} /> : <Menu size={21} />}</button>
           </div>
         </div>
-        {menuOpen && <div className="mobile-menu page-width"><a href="#top" onClick={closeMenu}>{t.navHome}<DirectionArrow size={15} /></a><a href={sitePath("/services")} onClick={closeMenu}>{t.navServices}<DirectionArrow size={15} /></a><a href={sitePath("/matters")} onClick={closeMenu}>{t.navMatters}<DirectionArrow size={15} /></a><a className="mobile-signin" href={sitePath("/auth/signin")} onClick={closeMenu}>{t.signIn}<DirectionArrow size={15} /></a></div>}
       </header>
 
       <main>
@@ -271,7 +282,17 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
             </div>
             <div className="flow-card hero-flow-card">
               <div className="flow-card-heading"><div><span>{t.routeKicker}</span><strong>{t.routeSub}</strong></div><span className="flow-code">01 / 05</span></div>
-              <div className="hero-flow-media"><img src={heroAsset} alt={isArabic ? "ملف معاملة قانونية أردنية" : "A Jordanian legal transaction file"} /><span>CASE FILE / JORDAN / 01</span></div>
+              <div className="hero-flow-media" aria-roledescription="carousel" aria-label={isArabic ? "صور الخدمات" : "Service images"}>
+                {slides.map((slide, index) => (
+                  <img key={slide.src} src={slide.src} alt={slide.alt} className={index === activeSlide ? "is-active" : ""} aria-hidden={index !== activeSlide} />
+                ))}
+                <span>CASE FILE / JORDAN / {slides[activeSlide].code}</span>
+                <div className="hero-slide-controls">
+                  <button type="button" onClick={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} aria-label={isArabic ? "الصورة السابقة" : "Previous image"}>←</button>
+                  <div className="hero-slide-dots">{slides.map((slide, index) => <button key={slide.code} type="button" className={index === activeSlide ? "is-active" : ""} onClick={() => setActiveSlide(index)} aria-label={`${isArabic ? "الصورة" : "Slide"} ${index + 1}`} />)}</div>
+                  <button type="button" onClick={() => setActiveSlide((activeSlide + 1) % slides.length)} aria-label={isArabic ? "الصورة التالية" : "Next image"}>→</button>
+                </div>
+              </div>
               <div className="flow-route">
                 {[t.where, t.situation, t.need, t.recommendation, t.caseFile].map((label, index) => {
                   const Icon = stepIcons[index];
@@ -314,9 +335,22 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           <div className="page-width"><div className="section-route-label"><span className="route-node-dot" />05 / {isArabic ? "من الخارج إلى الأردن" : "ABROAD TO JORDAN"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="bridge-grid"><div className="bridge-image"><img src={bridgeAsset} alt={isArabic ? "مساحة عمل عن بعد تتصل بالأردن" : "A remote workspace connected to Jordan"} /><span>{t.bridgeKicker}</span><div className="image-evidence-tag">CASE / 03 <span>REMOTE / JORDAN</span></div></div><div className="bridge-copy"><span className="section-kicker">05 / {t.bridgeKicker}</span><h2>{t.bridgeTitle}</h2><p>{t.bridgeBody}</p><button className="text-action" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={16} /></button></div></div></div>
         </section>
 
-        <section className="ready-section" data-reveal><div className="page-width ready-inner"><div className="section-route-label section-route-label--ready"><span className="route-node-dot" />06 / {isArabic ? "الخطوة التالية" : "ARRIVAL CHECKPOINT"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="ready-kicker"><span className="section-kicker">07 / NEXT</span><span className="ready-route">{t.routeKicker} <ArrowLeft size={14} /></span></div><h2>{t.readyTitle}</h2><p>{t.readyBody}</p><div className="ready-actions"><button className="primary-action primary-action--dark" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={17} /></button><a className="secondary-action secondary-action--dark" href={sitePath("/services")}>{t.browse}<ArrowDownRight size={16} /></a></div></div></section>
+        <section className="ready-section" data-reveal><div className="page-width ready-inner"><div className="section-route-label section-route-label--ready"><span className="route-node-dot" />06 / {isArabic ? "الخطوة التالية" : "ARRIVAL CHECKPOINT"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="ready-kicker"><span className="section-kicker">07 / NEXT</span><span className="ready-route">{t.routeKicker} <ArrowLeft size={14} /></span></div><h2>{t.readyTitle}</h2><p>{t.readyBody}</p><div className="ready-actions"><button className="primary-action primary-action--dark" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={17} /></button><a className="secondary-action secondary-action--dark" href={sitePath("/services")}>{t.browse}<ArrowDownRight size={16} /></a></div></div>        </section>
       </main>
 
+      {menuOpen && <button className="mobile-menu-backdrop" type="button" aria-label={isArabic ? "إغلاق القائمة" : "Close menu"} onClick={closeMenu} />}
+      <div className={`mobile-drawer ${menuOpen ? "is-open" : ""}`} aria-hidden={!menuOpen}>
+        <div className="mobile-drawer-head"><Brand language={language} /><button type="button" onClick={closeMenu} aria-label={isArabic ? "إغلاق القائمة" : "Close menu"}><X size={22} /></button></div>
+        <nav>{[["#top", t.navHome], ["#services", t.navServices], ["#matters", t.navMatters], [sitePath("/auth/signin"), t.signIn]].map(([href, label], index) => <a key={href} href={href} onClick={closeMenu}><span className="mobile-drawer-index">0{index + 1}</span><strong>{label}</strong><DirectionArrow size={17} /></a>)}</nav>
+        <button className="mobile-drawer-cta" type="button" onClick={() => { closeMenu(); openIntake(); }}>{t.start}<Sparkles size={18} /></button>
+      </div>
+      <nav className="mobile-bottom-nav" aria-label={isArabic ? "التنقل السفلي" : "Mobile navigation"}>
+        <a href="#top" className="is-active"><Landmark size={19} /><span>{t.navHome}</span></a>
+        <a href="#services"><FileText size={19} /><span>{t.navServices}</span></a>
+        <button type="button" onClick={openIntake}><Sparkles size={23} /></button>
+        <a href="#matters"><Scale size={19} /><span>{t.navMatters}</span></a>
+        <button type="button" onClick={() => setMenuOpen(true)}><Menu size={19} /><span>{isArabic ? "القائمة" : "Menu"}</span></button>
+      </nav>
     </div>
   );
 }
