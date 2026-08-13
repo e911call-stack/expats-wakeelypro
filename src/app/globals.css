@@ -1245,3 +1245,55 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
     overflow: visible;
   }
 }
+
+/* Uploaded legal-journey slider: show each complete portrait asset and make reading controls explicit. */
+.hero-flow-media {
+  height: clamp(300px, 34vw, 470px);
+  background: var(--paper);
+}
+.hero-flow-media img {
+  object-fit: contain;
+  object-position: center;
+  padding: 0;
+  background: var(--paper);
+  filter: none;
+}
+.hero-flow-media::after {
+  background: linear-gradient(180deg, rgba(17,21,22,.16), transparent 32%, rgba(17,21,22,.42));
+  pointer-events: none;
+}
+.hero-slide-center-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.hero-slide-pause {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 56px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 7px;
+  border-color: rgba(250,250,248,.55) !important;
+  font-family: "Manrope", sans-serif;
+  font-size: 8px !important;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.hero-slide-pause span { position: static; color: inherit; font-size: inherit; letter-spacing: inherit; }
+.hero-slide-pause:hover span, .hero-slide-pause:focus-visible span { color: inherit; }
+@media (max-width: 980px) {
+  .hero-flow-media { height: clamp(300px, 66vw, 500px); }
+}
+@media (max-width: 640px) {
+  .hero-flow-media { height: min(118vw, 470px); margin-block: 14px 4px; }
+  .hero-slide-controls { right: 8px; bottom: 8px; left: 8px; }
+  .hero-slide-center-controls { gap: 6px; }
+  .hero-slide-pause { min-width: 52px; padding-inline: 5px; font-size: 7px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-flow-media img { transition: none; }
+}

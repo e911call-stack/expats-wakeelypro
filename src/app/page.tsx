@@ -16,8 +16,10 @@ import {
   Languages,
   Landmark,
   Menu,
-  MessageCircle,
   Moon,
+  MessageCircle,
+  Pause,
+  Play,
   Scale,
   ShieldCheck,
   Sparkles,
@@ -197,6 +199,7 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
   });
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [sliderPaused, setSliderPaused] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const toggleTheme = () => {
     setTheme((current) => {
@@ -235,16 +238,19 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
   useEffect(() => { window.localStorage.setItem("wakeely-language", language); }, [language]);
 
   const slides = [
-    { src: heroAsset, alt: isArabic ? "ملف معاملة قانونية أردنية" : "A Jordanian legal transaction file", code: "01" },
-    { src: routeAsset, alt: isArabic ? "مسار المعاملة القانونية" : "Legal transaction route", code: "02" },
-    { src: servicesAsset, alt: isArabic ? "ملف خدمة قانونية" : "Legal service file", code: "03" },
-    { src: bridgeAsset, alt: isArabic ? "خدمات قانونية عن بعد" : "Remote legal services", code: "04" },
+    { src: "/slider/1.png", alt: isArabic ? "التوجيه إلى التسليم" : "From orientation to delivery", code: "01" },
+    { src: "/slider/2.png", alt: isArabic ? "أين أنت؟" : "Where are you?", code: "02" },
+    { src: "/slider/3.png", alt: isArabic ? "ما حالتك؟" : "What is your situation?", code: "03" },
+    { src: "/slider/4.png", alt: isArabic ? "ماذا تحتاج؟" : "What do you need?", code: "04" },
+    { src: "/slider/5.png", alt: isArabic ? "التوصية القانونية" : "Legal recommendation", code: "05" },
+    { src: "/slider/6.png", alt: isArabic ? "ملف القضية" : "Case file", code: "06" },
   ];
 
   useEffect(() => {
+    if (sliderPaused) return;
     const id = window.setInterval(() => setActiveSlide((current) => (current + 1) % slides.length), 5000);
     return () => window.clearInterval(id);
-  }, [slides.length]);
+  }, [slides.length, sliderPaused]);
 
   useEffect(() => {
     const root = pageRef.current;
@@ -303,25 +309,29 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
               <div className="proof-row"><span><Sparkles size={15} /> {t.ai}</span><span><Languages size={15} /> {t.bilingual}</span><span><ShieldCheck size={15} /> {t.catalog}</span></div>
             </div>
             <div className="flow-card hero-flow-card">
-              <div className="flow-card-heading"><div><span>{t.routeKicker}</span><strong>{t.routeSub}</strong></div><span className="flow-code">01 / 05</span></div>
-              <div className="hero-flow-media" aria-roledescription="carousel" aria-label={isArabic ? "صور الخدمات" : "Service images"}>
+              <div className="flow-card-heading"><div><span>{t.routeKicker}</span><strong>{t.routeSub}</strong></div><span className="flow-code">{String(activeSlide + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}</span></div>
+              <div
+                className="hero-flow-media"
+                aria-roledescription="carousel"
+                aria-label={isArabic ? "شرائح الخدمات القانونية" : "Legal service slides"}
+                onMouseEnter={() => setSliderPaused(true)}
+                onMouseLeave={() => setSliderPaused(false)}
+                onFocus={() => setSliderPaused(true)}
+                onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSliderPaused(false); }}
+              >
                 {slides.map((slide, index) => (
                   <img key={slide.src} src={slide.src} alt={slide.alt} className={index === activeSlide ? "is-active" : ""} aria-hidden={index !== activeSlide} />
                 ))}
-                <span>CASE FILE / JORDAN / {slides[activeSlide].code}</span>
+                <span>WAKEELY / {slides[activeSlide].code} — {sliderPaused ? (isArabic ? "متوقف للقراءة" : "PAUSED FOR READING") : "AUTO PLAY"}</span>
                 <div className="hero-slide-controls">
-                  <button type="button" onClick={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} aria-label={isArabic ? "الصورة السابقة" : "Previous image"}>←</button>
-                  <div className="hero-slide-dots">{slides.map((slide, index) => <button key={slide.code} type="button" className={index === activeSlide ? "is-active" : ""} onClick={() => setActiveSlide(index)} aria-label={`${isArabic ? "الصورة" : "Slide"} ${index + 1}`} />)}</div>
-                  <button type="button" onClick={() => setActiveSlide((activeSlide + 1) % slides.length)} aria-label={isArabic ? "الصورة التالية" : "Next image"}>→</button>
+                  <button type="button" onClick={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} aria-label={isArabic ? "الصورة السابقة" : "Previous slide"}>←</button>
+                  <div className="hero-slide-center-controls">
+                    <div className="hero-slide-dots">{slides.map((slide, index) => <button key={slide.code} type="button" className={index === activeSlide ? "is-active" : ""} onClick={() => setActiveSlide(index)} aria-label={`${isArabic ? "الشريحة" : "Slide"} ${index + 1}`} />)}</div>
+                    <button className="hero-slide-pause" type="button" onClick={() => setSliderPaused((paused) => !paused)} aria-label={sliderPaused ? (isArabic ? "تشغيل الشرائح" : "Resume slides") : (isArabic ? "إيقاف الشرائح مؤقتاً" : "Pause slides")}>{sliderPaused ? <Play size={11} /> : <Pause size={11} />}<span>{sliderPaused ? (isArabic ? "تشغيل" : "Play") : (isArabic ? "إيقاف" : "Pause")}</span></button>
+                  </div>
+                  <button type="button" onClick={() => setActiveSlide((activeSlide + 1) % slides.length)} aria-label={isArabic ? "الصورة التالية" : "Next slide"}>→</button>
                 </div>
               </div>
-              <div className="flow-route">
-                {[t.where, t.situation, t.need, t.recommendation, t.caseFile].map((label, index) => {
-                  const Icon = stepIcons[index];
-                  return <Tooltip key={label}><TooltipTrigger asChild><div className={`flow-node ${index === 0 ? "is-active" : ""}`} tabIndex={0}><span className="flow-node-line" /><span className="flow-node-icon"><Icon size={16} /></span><span className="flow-node-label">{label}</span><DirectionArrow size={15} /></div></TooltipTrigger><TooltipContent side={isArabic ? "left" : "right"} className="route-tooltip" dir={isArabic ? "rtl" : "ltr"}>{t.routeHints[index]}</TooltipContent></Tooltip>;
-                })}
-              </div>
-              <div className="flow-card-foot"><span>WAKEELY / ROUTE 01</span><span><span className="green-pulse" /> {isArabic ? "مفتوح للتوجيه" : "Open for orientation"}</span></div>
             </div>
           </div>
           <div className="hero-caption page-width"><span>JORDAN / REMOTE LEGAL SERVICES</span><span>01 — THE ROUTE</span></div>
