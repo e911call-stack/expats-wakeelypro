@@ -183,7 +183,7 @@ const stepIcons = [Globe2, UserRound, Scale, Sparkles, FileCheck2];
 function Brand({ language }: { language: Language }) {
   const t = text[language];
   return (
-    <a className="brand" href="#top" aria-label={t.brand}>
+    <a className="brand" href="/" aria-label={t.brand}>
       <img className="brand-image" src={markAsset} alt={t.brand} />
     </a>
   );

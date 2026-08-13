@@ -5,6 +5,8 @@ import { LegalNotice } from "@/components/legal-disclaimer";
 import { LocaleProvider } from "@/lib/locale-provider";
 import { SessionProvider } from "@/lib/session-provider";
 import { SiteHeader } from "@/components/site-header";
+import Link from "next/link";
+import { ArrowUpRight, Briefcase, FileText } from "lucide-react";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://expats.wakeelypro.com"),
@@ -59,12 +61,34 @@ export default function RootLayout({
 
 function Footer() {
   return (
-    <footer className="mt-auto border-t border-border bg-muted/30 py-6">
-      <div className="container mx-auto px-4 text-center text-xs text-muted-foreground space-y-1">
-        <p>
-          <strong className="text-foreground">Jordan Remote Legal Services</strong> — Phase 1 MVP · Bilingual (AR/EN)
-        </p>
-        <LegalNotice />
+    <footer className="site-footer mt-auto border-t border-[#00516b] bg-[#006c8e] text-white">
+      <div className="container mx-auto px-4 py-10 sm:px-6 lg:py-12">
+        <div className="grid gap-8 lg:grid-cols-[1.35fr_0.75fr_0.75fr] lg:items-start">
+          <div className="space-y-4" dir="rtl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5f2]">خدمات المغتربين القانونية</p>
+            <h2 className="max-w-xl text-2xl font-bold leading-tight sm:text-3xl">طريق أوضح لإنجاز معاملاتك القانونية في الأردن.</h2>
+            <p className="max-w-xl text-sm leading-7 text-white/85">منصة تقنية تساعدك على فهم الخطوة التالية وتنظيم طلبك والتواصل مع محامين مستقلين مرخّصين.</p>
+          </div>
+          <div className="space-y-3" dir="rtl">
+            <p className="text-sm font-bold text-[#d9f5f2]">روابط سريعة</p>
+            <Link href="/services" className="flex items-center gap-2 text-sm text-white/90 transition hover:text-white"><Briefcase className="h-4 w-4" />الخدمات والإجراءات<ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            <Link href="/intake" className="flex items-center gap-2 text-sm text-white/90 transition hover:text-white"><FileText className="h-4 w-4" />ابدأ طلبك<ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            <Link href="/legal-disclaimer" className="flex items-center gap-2 text-sm text-white/90 transition hover:text-white">إخلاء المسؤولية<ArrowUpRight className="h-3.5 w-3.5" /></Link>
+          </div>
+          <div className="space-y-3" dir="ltr">
+            <p className="text-sm font-bold text-[#d9f5f2]">Quick links</p>
+            <Link href="/services" className="flex items-center gap-2 text-sm text-white/90 transition hover:text-white"><Briefcase className="h-4 w-4" />Services and procedures<ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            <Link href="/intake" className="flex items-center gap-2 text-sm text-white/90 transition hover:text-white"><FileText className="h-4 w-4" />Start your request<ArrowUpRight className="h-3.5 w-3.5" /></Link>
+            <Link href="/legal-disclaimer" className="flex items-center gap-2 text-sm text-white/90 transition hover:text-white">Legal disclaimer<ArrowUpRight className="h-3.5 w-3.5" /></Link>
+          </div>
+        </div>
+        <div className="mt-8 border-t border-white/20 pt-5">
+          <LegalNotice className="footer-legal-notice" />
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs text-white/70" dir="ltr">
+            <p><strong className="text-white">Jordan Remote Legal Services</strong> · Phase 1 MVP · Bilingual AR/EN</p>
+            <p>Technology platform · Independent licensed lawyers</p>
+          </div>
+        </div>
       </div>
     </footer>
   );

@@ -31,7 +31,6 @@ export function SiteHeader() {
   const { locale, setLocale, t } = useLocale();
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
-  if (pathname === "/") return null;
 
   useEffect(() => {
     if (!user) { setUnread(0); return; }
@@ -48,6 +47,8 @@ export function SiteHeader() {
     const id = setInterval(fetchUnread, 30000);
     return () => { cancelled = true; clearInterval(id); };
   }, [user]);
+
+  if (pathname === "/") return null;
 
   const navLinks = [
     { href: "/", label: t("nav.home"), icon: Home },

@@ -1386,3 +1386,53 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   .hero-slide-toolbar > button { width: 26px; height: 26px; }
   .hero-slide-badge { right: 9px !important; bottom: 9px !important; font-size: 6px !important; }
 }
+
+/* Shared footer refresh: keep the footer visible and readable across the public site. */
+body.landing-active > footer {
+  display: block;
+}
+
+.site-footer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  box-shadow: 0 -12px 32px rgba(0, 67, 86, 0.12);
+}
+
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(217, 245, 242, 0.18), transparent 28%),
+    radial-gradient(circle at 88% 80%, rgba(253, 247, 227, 0.12), transparent 30%);
+  pointer-events: none;
+}
+
+.site-footer a:focus-visible {
+  outline: 3px solid #fdf7e3;
+  outline-offset: 3px;
+}
+
+.site-footer .footer-legal-notice {
+  border-color: rgba(0, 81, 107, 0.22);
+  background: #fdf7e3;
+  color: #163c47;
+  box-shadow: 0 8px 24px rgba(0, 44, 58, 0.12);
+}
+
+.site-footer .footer-legal-notice strong,
+.site-footer .footer-legal-notice a {
+  color: #006c8e;
+}
+
+.site-footer .footer-legal-notice a {
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .site-footer .footer-legal-notice {
+    text-align: start;
+  }
+}
