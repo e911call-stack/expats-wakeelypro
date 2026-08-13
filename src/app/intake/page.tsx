@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/locale-provider";
 import { useSession } from "@/lib/session-provider";
@@ -25,6 +25,9 @@ import {
   ShieldAlert,
   Clock,
   FileText,
+  FileUp,
+  Send,
+  Trash2,
   Building2,
   Landmark,
   KeyRound,
@@ -102,6 +105,15 @@ type Recommendation = {
   documentSlugs: { slug: string; nameAr: string; nameEn: string; isRequired: boolean }[];
 };
 
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(reader.error ?? new Error("file_read_failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function IntakePage() {
   const router = useRouter();
   const { locale } = useLocale();
@@ -122,13 +134,24 @@ export default function IntakePage() {
   const [intakeId, setIntakeId] = useState<string | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [engagementAcknowledged, setEngagementAcknowledged] = useState(false);
+  const [selectedServiceSlug, setSelectedServiceSlug] = useState<string | null>(null);
+  const [selectedProcedurePrompt, setSelectedProcedurePrompt] = useState("");
+  const [serviceStep, setServiceStep] = useState<"identity" | "context" | "story" | "documents" | "submitted">("identity");
+  const [desiredOutcome, setDesiredOutcome] = useState("");
+  const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const selectedSlug = params.get("service");
     const prompt = ar ? params.get("promptAr") : params.get("promptEn");
-    if (selectedSlug) setNeedPreset(selectedSlug);
-    if (prompt) setNeedText(prompt);
+    if (selectedSlug) {
+      setSelectedServiceSlug(selectedSlug);
+      setNeedPreset(selectedSlug);
+    }
+    if (prompt) {
+      setSelectedProcedurePrompt(prompt);
+      setNeedText(prompt);
+    }
   }, [ar]);
 
   function pickPreset(slug: string) {
@@ -151,6 +174,56 @@ export default function IntakePage() {
       return ar ? "تم تجاوز الحد المؤقت للطلبات. يرجى المحاولة لاحقاً." : "Too many requests. Please try again later.";
     }
     return data.message || data.error || (ar ? "حدث خطأ غير متوقع." : "Something went wrong.");
+  }
+
+  async function submitSelectedService() {
+    if (!user) {
+      router.push("/#signin");
+      return;
+    }
+    if (clientName.trim().length < 2 || clientPhone.trim().length < 5 || country.length < 2) {
+      setError(ar ? "يرجى إكمال الاسم ورقم الهاتف والدولة." : "Please complete your name, phone number, and country.");
+      setServiceStep("identity");
+      return;
+    }
+    if (needText.trim().length < 20 || desiredOutcome.trim().length < 5) {
+      setError(ar ? "يرجى شرح ما حدث وما تريد إنجازه بمزيد من التفاصيل." : "Please explain what happened and what you want to accomplish in more detail.");
+      setServiceStep("story");
+      return;
+    }
+    setError(null);
+    setServiceStep("documents");
+    try {
+      const attachments = await Promise.all(supportingFiles.map(async (file) => ({
+        fileName: file.name,
+        fileType: file.type || "file",
+        fileSize: file.size,
+        fileBase64: await readFileAsDataUrl(file),
+      })));
+      const res = await fetch("/api/legal/intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `${needText.trim()}\\n\\n${ar ? "ما أريد إنجازه:" : "What I want to accomplish:"}\\n${desiredOutcome.trim()}`,
+          language: locale,
+          clientName: clientName.trim(), clientPhone: clientPhone.trim(), clientEmail: clientEmail.trim() || undefined,
+          selectedServiceSlug, attachments,
+          clientCountry: country || undefined, clientCity: city || undefined, clientStatus: status || undefined, urgency,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(getErrorMessage(data));
+        setServiceStep("documents");
+        return;
+      }
+      setIntakeId(data.intakeId);
+      setRecommendation(data.recommendation ?? null);
+      setServiceStep("submitted");
+    } catch {
+      setError(ar ? "تعذر إرسال الطلب حالياً. حاول مرة أخرى." : "We could not submit your request right now. Please try again.");
+      setServiceStep("documents");
+    }
   }
 
   async function analyze() {
@@ -240,6 +313,11 @@ export default function IntakePage() {
 
   function restart() {
     setStep("where");
+    setServiceStep("identity");
+    setDesiredOutcome("");
+    setSupportingFiles([]);
+    setSelectedServiceSlug(null);
+    setSelectedProcedurePrompt("");
     setClientName("");
     setClientPhone("");
     setClientEmail("");
@@ -303,6 +381,39 @@ export default function IntakePage() {
           </div>
         </div>
 
+        {selectedServiceSlug ? (
+          <SelectedServiceIntake
+            ar={ar}
+            serviceStep={serviceStep}
+            setServiceStep={setServiceStep}
+            selectedProcedurePrompt={selectedProcedurePrompt}
+            clientName={clientName}
+            setClientName={setClientName}
+            clientPhone={clientPhone}
+            setClientPhone={setClientPhone}
+            clientEmail={clientEmail}
+            setClientEmail={setClientEmail}
+            country={country}
+            setCountry={setCountry}
+            city={city}
+            setCity={setCity}
+            status={status}
+            setStatus={setStatus}
+            urgency={urgency}
+            setUrgency={setUrgency}
+            needText={needText}
+            setNeedText={setNeedText}
+            desiredOutcome={desiredOutcome}
+            setDesiredOutcome={setDesiredOutcome}
+            supportingFiles={supportingFiles}
+            setSupportingFiles={setSupportingFiles}
+            error={error}
+            intakeId={intakeId}
+            onSubmit={submitSelectedService}
+            onRestart={restart}
+          />
+        ) : (
+        <>
         {/* Stepper */}
         <div className="mb-8 flex items-center justify-between gap-2">
           {[
@@ -556,7 +667,64 @@ export default function IntakePage() {
             {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
           </div>
         )}
+        </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function SelectedServiceIntake({
+  ar, serviceStep, setServiceStep, selectedProcedurePrompt,
+  clientName, setClientName, clientPhone, setClientPhone, clientEmail, setClientEmail,
+  country, setCountry, city, setCity, status, setStatus, urgency, setUrgency,
+  needText, setNeedText, desiredOutcome, setDesiredOutcome,
+  supportingFiles, setSupportingFiles, error, intakeId, onSubmit, onRestart,
+}: {
+  ar: boolean;
+  serviceStep: "identity" | "context" | "story" | "documents" | "submitted";
+  setServiceStep: Dispatch<SetStateAction<"identity" | "context" | "story" | "documents" | "submitted">>;
+  selectedProcedurePrompt: string;
+  clientName: string; setClientName: (value: string) => void;
+  clientPhone: string; setClientPhone: (value: string) => void;
+  clientEmail: string; setClientEmail: (value: string) => void;
+  country: string; setCountry: (value: string) => void;
+  city: string; setCity: (value: string) => void;
+  status: string; setStatus: (value: string) => void;
+  urgency: "low" | "medium" | "high"; setUrgency: (value: "low" | "medium" | "high") => void;
+  needText: string; setNeedText: (value: string) => void;
+  desiredOutcome: string; setDesiredOutcome: (value: string) => void;
+  supportingFiles: File[]; setSupportingFiles: Dispatch<SetStateAction<File[]>>;
+  error: string | null; intakeId: string | null;
+  onSubmit: () => void; onRestart: () => void;
+}) {
+  const labels = ar
+    ? { identity: "بياناتك", context: "وضعك", story: "ما حدث وما تريده", documents: "المستندات", next: "التالي", back: "السابق", send: "إرسال الطلب", selected: "الإجراء المختار", facts: "اشرح ما الذي حدث", outcome: "ماذا تريد أن ننجز لك؟", upload: "أرفق المستندات الداعمة", optional: "اختياري", submitted: "تم استلام طلبك", submittedBody: "سيراجع فريقنا المعلومات ويربطك بالمسار المناسب.", restart: "بدء طلب جديد" }
+    : { identity: "Your details", context: "Your context", story: "What happened and what you need", documents: "Documents", next: "Next", back: "Back", send: "Submit request", selected: "Selected procedure", facts: "Tell us what happened", outcome: "What do you want us to accomplish?", upload: "Attach supporting documents", optional: "Optional", submitted: "Your request was received", submittedBody: "Our team will review the information and connect you with the appropriate path.", restart: "Start a new request" };
+  const steps = [labels.identity, labels.context, labels.story, labels.documents];
+  const currentIndex = serviceStep === "submitted" ? 4 : steps.indexOf(labels[serviceStep]);
+  const addFiles = (incoming: FileList | null) => {
+    if (!incoming) return;
+    const accepted = Array.from(incoming).filter((file) => file.size <= 2 * 1024 * 1024).slice(0, 3 - supportingFiles.length);
+    setSupportingFiles((previous) => [...previous, ...accepted]);
+  };
+
+  if (serviceStep === "submitted") {
+    return <Card className="border-primary/30"><CardContent className="flex flex-col items-center gap-4 py-14 text-center"><CheckCircle2 className="h-14 w-14 text-primary" /><h2 className="text-2xl font-bold">{labels.submitted}</h2><p className="max-w-md text-muted-foreground">{labels.submittedBody}</p>{intakeId && <p className="text-xs text-muted-foreground">{ar ? "رقم الطلب" : "Request ID"}: {intakeId}</p>}<Button variant="outline" onClick={onRestart}>{labels.restart}</Button></CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-5" dir={ar ? "rtl" : "ltr"}>
+      <Card className="border-primary/25 bg-primary/5"><CardContent className="flex items-start gap-3 p-4"><FileText className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><div><p className="text-xs font-semibold uppercase tracking-wide text-primary">{labels.selected}</p><p className="mt-1 font-semibold">{selectedProcedurePrompt}</p><p className="mt-1 text-xs text-muted-foreground">{ar ? "سنجمع معلوماتك وشرحك فقط. لن نطلب منك اختيار خدمة أخرى." : "We will collect your information and story only. You will not be asked to choose another service."}</p></div></CardContent></Card>
+      <div className="grid grid-cols-4 gap-2" aria-label={ar ? "مراحل الطلب" : "Request stages"}>{steps.map((label, index) => <div key={label} className="space-y-1"><div className={`h-1.5 rounded-full ${index <= currentIndex ? "bg-primary" : "bg-muted"}`} /><p className={`text-center text-[11px] ${index === currentIndex ? "font-semibold text-primary" : "text-muted-foreground"}`}>{label}</p></div>)}</div>
+
+      {serviceStep === "identity" && <Card><CardHeader><CardTitle>{labels.identity}</CardTitle><CardDescription>{ar ? "كيف يمكن لمحامٍ مرخّص التواصل معك؟" : "How can a licensed lawyer contact you?"}</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><div className="sm:col-span-2"><Label htmlFor="service-client-name">{ar ? "الاسم الكامل" : "Full name"}</Label><Input id="service-client-name" value={clientName} onChange={(event) => setClientName(event.target.value)} /></div><div><Label htmlFor="service-client-phone">{ar ? "الهاتف / واتساب" : "Phone / WhatsApp"}</Label><Input id="service-client-phone" value={clientPhone} onChange={(event) => setClientPhone(event.target.value)} placeholder="+962 …" /></div><div><Label htmlFor="service-client-email">{ar ? "البريد الإلكتروني" : "Email"}</Label><Input id="service-client-email" type="email" value={clientEmail} onChange={(event) => setClientEmail(event.target.value)} /></div><div><Label htmlFor="service-country">{ar ? "بلد الإقامة" : "Country of residence"}</Label><select id="service-country" value={country} onChange={(event) => setCountry(event.target.value)} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">{ar ? "اختر الدولة…" : "Select country…"}</option>{COUNTRIES.map((item) => <option key={item} value={item}>{item}</option>)}</select></div><div><Label htmlFor="service-city">{ar ? "المدينة" : "City"}</Label><Input id="service-city" value={city} onChange={(event) => setCity(event.target.value)} /></div><div className="flex justify-end sm:col-span-2"><Button onClick={() => setServiceStep("context")} disabled={!clientName.trim() || !clientPhone.trim() || !country}>{labels.next}<ArrowLeft className="h-4 w-4" /></Button></div></CardContent></Card>}
+
+      {serviceStep === "context" && <Card><CardHeader><CardTitle>{labels.context}</CardTitle><CardDescription>{ar ? "هذه المعلومات تساعدنا على فهم المسار العملي للطلب." : "This helps us understand the practical path for your request."}</CardDescription></CardHeader><CardContent className="space-y-5"><div><Label>{ar ? "صفتك" : "Your status"}</Label><div className="mt-2 grid gap-2 sm:grid-cols-2">{STATUSES.map((item) => <button key={item.value} type="button" onClick={() => setStatus(item.value)} className={`rounded-lg border p-3 text-start text-sm ${status === item.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>{ar ? item.ar : item.en}</button>)}</div></div><div><Label>{ar ? "مدى الاستعجال" : "Urgency"}</Label><div className="mt-2 flex flex-wrap gap-2">{(["low", "medium", "high"] as const).map((item) => <button key={item} type="button" onClick={() => setUrgency(item)} className={`rounded-md border px-3 py-2 text-xs ${urgency === item ? "border-primary bg-primary/5" : "border-border"}`}>{ar ? item === "low" ? "منخفض" : item === "medium" ? "متوسط" : "عالٍ" : item[0].toUpperCase() + item.slice(1)}</button>)}</div></div><div className="flex justify-between"><Button variant="ghost" onClick={() => setServiceStep("identity")}><ArrowRight className="h-4 w-4" />{labels.back}</Button><Button onClick={() => setServiceStep("story")} disabled={!status}>{labels.next}<ArrowLeft className="h-4 w-4" /></Button></div></CardContent></Card>}
+
+      {serviceStep === "story" && <Card><CardHeader><CardTitle>{labels.story}</CardTitle><CardDescription>{ar ? "اكتب الوقائع بطريقتك. لا تحتاج إلى استخدام مصطلحات قانونية." : "Describe the facts in your own words. You do not need legal terminology."}</CardDescription></CardHeader><CardContent className="space-y-4"><div><Label htmlFor="service-facts">{labels.facts}</Label><Textarea id="service-facts" rows={6} value={needText} onChange={(event) => setNeedText(event.target.value)} placeholder={ar ? "مثال: أعيش خارج الأردن، وحدثت المشكلة التالية…" : "Example: I live outside Jordan, and the following happened…"} /></div><div><Label htmlFor="service-outcome">{labels.outcome}</Label><Textarea id="service-outcome" rows={4} value={desiredOutcome} onChange={(event) => setDesiredOutcome(event.target.value)} placeholder={ar ? "مثال: أريد معرفة الخطوات والوثائق المطلوبة…" : "Example: I want to understand the steps and documents required…"} /></div>{error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}<div className="flex justify-between"><Button variant="ghost" onClick={() => setServiceStep("context")}><ArrowRight className="h-4 w-4" />{labels.back}</Button><Button onClick={() => setServiceStep("documents")} disabled={needText.trim().length < 20 || desiredOutcome.trim().length < 5}>{labels.next}<ArrowLeft className="h-4 w-4" /></Button></div></CardContent></Card>}
+
+      {serviceStep === "documents" && <Card><CardHeader><CardTitle className="flex items-center gap-2"><FileUp className="h-5 w-5" />{labels.upload}</CardTitle><CardDescription>{ar ? "يمكنك إرفاق صور أو ملفات PDF أو مستندات Word. الحد الأقصى 3 ملفات، و2 ميغابايت لكل ملف." : "Attach images, PDFs, or Word documents. Up to 3 files, 2 MB each."} <span className="text-muted-foreground">({labels.optional})</span></CardDescription></CardHeader><CardContent className="space-y-4"><Input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={(event) => addFiles(event.target.files)} />{supportingFiles.length > 0 && <div className="space-y-2">{supportingFiles.map((file, index) => <div key={`${file.name}-${index}`} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"><span className="truncate">{file.name}</span><button type="button" aria-label={ar ? "حذف الملف" : "Remove file"} onClick={() => setSupportingFiles((previous) => previous.filter((_, fileIndex) => fileIndex !== index))}><Trash2 className="h-4 w-4 text-muted-foreground" /></button></div>)}</div>}{error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}<div className="flex justify-between"><Button variant="ghost" onClick={() => setServiceStep("story")}><ArrowRight className="h-4 w-4" />{labels.back}</Button><Button onClick={onSubmit} className="gap-2"><Send className="h-4 w-4" />{labels.send}</Button></div></CardContent></Card>}
     </div>
   );
 }

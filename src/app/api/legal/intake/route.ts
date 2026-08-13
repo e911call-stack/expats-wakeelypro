@@ -51,6 +51,16 @@ export async function POST(req: NextRequest) {
     const practiceAreaSlug = body.practiceAreaSlug ? String(body.practiceAreaSlug) : null;
     const jurisdictionCode = body.jurisdictionCode ? String(body.jurisdictionCode) : null;
     const urgency = body.urgency === "low" || body.urgency === "medium" || body.urgency === "high" ? body.urgency : null;
+    const attachments = Array.isArray(body.attachments)
+      ? body.attachments.slice(0, 3).map((item: unknown) => {
+          const file = item && typeof item === "object" ? item as Record<string, unknown> : {};
+          const fileName = String(file.fileName ?? "attachment").trim().slice(0, 180);
+          const fileType = String(file.fileType ?? "file").slice(0, 120);
+          const fileSize = Math.max(0, Math.min(Number(file.fileSize ?? 0), 2 * 1024 * 1024));
+          const fileBase64 = typeof file.fileBase64 === "string" ? file.fileBase64.slice(0, 3_000_000) : null;
+          return { fileName, fileType, fileSize, fileBase64 };
+        }).filter((file: { fileName: string; fileBase64: string | null }) => Boolean(file.fileName && file.fileBase64))
+      : [];
 
     if (text.length < 10) return NextResponse.json({ error: "text_too_short", min: 10 }, { status: 400 });
     if (text.length > 8000) return NextResponse.json({ error: "text_too_long", max: 8000 }, { status: 400 });
@@ -92,6 +102,7 @@ export async function POST(req: NextRequest) {
           clientName, clientPhone, clientEmail, selectedServiceSlug,
           clientCountry, clientCity, clientStatus,
           practiceAreaSlug, jurisdictionCode, urgency,
+          supportingDocuments: attachments,
         } as object,
         finalSummary: recommendation
           ? (language === "ar"
@@ -112,10 +123,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await audit("legal.intake.create", "LegalIntake", intake.id, { actorId: session.id, hasRecommendation: Boolean(recommendation) });
+    await audit("legal.intake.create", "LegalIntake", intake.id, { actorId: session.id, hasRecommendation: Boolean(recommendation), attachmentCount: attachments.length });
 
     return NextResponse.json({
       intakeId: intake.id,
+      attachmentCount: attachments.length,
       recommendation: recommendation
         ? {
             service: {
