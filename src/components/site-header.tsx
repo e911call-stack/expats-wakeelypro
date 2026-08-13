@@ -94,8 +94,8 @@ export function SiteHeader() {
           </Sheet>
 
           <Link href="/" className="flex min-w-0 items-center gap-2">
-            <div className="relative h-10 w-[174px] flex-shrink-0">
-              <Image src="/expat-legal-services-logo.png" alt="خدمات المغتربين القانونية" fill sizes="174px" className="object-contain object-center" priority />
+            <div className="relative h-12 w-[170px] flex-shrink-0 sm:h-14 sm:w-[184px]">
+              <Image src="/expat-legal-services-logo.png" alt="خدمات المغتربين القانونية" fill sizes="(max-width: 640px) 170px, 184px" className="object-contain object-center" priority />
             </div>
           </Link>
 

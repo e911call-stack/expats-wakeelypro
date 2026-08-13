@@ -776,7 +776,7 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
 .is-english, .is-english button, .is-english input, .is-english select, .is-english textarea { font-family: "Manrope", "Tajawal", sans-serif; }
 
 /* Responsive brand, mobile-native navigation, and hero carousel restoration */
-.brand-image { display: block; width: 186px; height: 42px; object-fit: contain; object-position: center; }
+.brand-image { display: block; width: 188px; height: 68px; object-fit: contain; object-position: center; }
 .hero-flow-media img { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; }
 .hero-flow-media img.is-active { opacity: 1; }
 .hero-slide-controls { position: absolute; right: 12px; bottom: 9px; left: 12px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -789,7 +789,7 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
 
 @media (max-width: 640px) {
   .brand { min-width: 0; flex: 1 1 auto; }
-  .brand-image { width: min(190px, 48vw); height: 38px; }
+  .brand-image { width: min(184px, 55vw); height: 66px; }
   .wakeely-header { z-index: 50; }
   .wakeely-header .header-inner { padding-inline: 16px; }
   .wakeely-header .header-tools { gap: 8px; }
@@ -802,7 +802,7 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   .mobile-drawer.is-open { transform: translateX(0); }
   .mobile-drawer-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
   .mobile-drawer-head button { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid var(--line); background: var(--paper-warm); color: var(--charcoal); }
-  .mobile-drawer-head .brand-image { width: 190px; height: 36px; }
+  .mobile-drawer-head .brand-image { width: 184px; height: 66px; }
   .mobile-drawer nav { display: grid; margin-top: 22px; }
   .mobile-drawer nav a { display: grid; grid-template-columns: 34px 1fr 20px; align-items: center; gap: 10px; min-height: 70px; border-bottom: 1px solid var(--line); color: var(--charcoal); }
   .mobile-drawer nav a strong { font-family: "Tajawal", sans-serif; font-size: 21px; font-weight: 800; }
