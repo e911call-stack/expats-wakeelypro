@@ -1073,3 +1073,52 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   .hero-flow-media { height: clamp(110px, 20svh, 148px); }
   .proof-row { gap: 14px; margin-top: 22px; padding-top: 13px; font-size: 11px; }
 }
+
+/* Keep the bilingual entry dialog compact; only the dialog content scrolls. */
+.landing-disclaimer-card {
+  box-sizing: border-box;
+  width: min(760px, calc(100% - 32px));
+  height: min(65svh, 700px);
+  max-height: calc(100svh - 32px);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(16px, 2.4vw, 28px);
+  border-radius: 18px;
+}
+.landing-disclaimer-icon {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+.landing-disclaimer-card h1,
+.landing-disclaimer-card h2 {
+  margin-bottom: 12px;
+}
+.landing-disclaimer-copy {
+  font-size: clamp(.82rem, 1.25vw, 1rem);
+  line-height: 1.62;
+}
+.landing-disclaimer-copy p { margin-bottom: 10px; }
+.landing-disclaimer-copy p:last-child { margin-bottom: 14px; }
+.landing-disclaimer-divider { margin: 14px 0; }
+.landing-disclaimer-actions { gap: 7px; margin-top: 10px; }
+.landing-disclaimer-accept { min-height: 42px; }
+.landing-disclaimer-decline { min-height: 36px; }
+@media (max-width: 640px) {
+  .landing-disclaimer-gate { padding: 16px; }
+  .landing-disclaimer-card {
+    width: calc(100% - 8px);
+    height: min(65svh, 560px);
+    max-height: calc(100svh - 24px);
+    padding: 14px 15px 16px;
+    border-radius: 14px;
+  }
+  .landing-disclaimer-icon { width: 36px; height: 36px; margin-bottom: 9px; }
+  .landing-disclaimer-card h1 { font-size: 1.45rem; }
+  .landing-disclaimer-card h2 { font-size: 1.25rem; }
+  .landing-disclaimer-copy { font-size: .78rem; line-height: 1.55; }
+  .landing-disclaimer-copy p { margin-bottom: 8px; }
+  .landing-disclaimer-divider { margin: 11px 0; }
+}
