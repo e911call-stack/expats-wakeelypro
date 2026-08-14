@@ -237,17 +237,18 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
   useEffect(() => { window.localStorage.setItem("wakeely-language", language); }, [language]);
 
   const slides = [
-    { src: "/slider/1.png", alt: isArabic ? "التوجيه إلى التسليم" : "From orientation to delivery", code: "01" },
-    { src: "/slider/2.png", alt: isArabic ? "أين أنت؟" : "Where are you?", code: "02" },
-    { src: "/slider/3.png", alt: isArabic ? "ما حالتك؟" : "What is your situation?", code: "03" },
-    { src: "/slider/4.png", alt: isArabic ? "ماذا تحتاج؟" : "What do you need?", code: "04" },
-    { src: "/slider/5.png", alt: isArabic ? "التوصية القانونية" : "Legal recommendation", code: "05" },
-    { src: "/slider/6.png", alt: isArabic ? "ملف القضية" : "Case file", code: "06" },
+    { src: "/slider/services/property-sale.png", alt: isArabic ? "بيع العقار من الخارج" : "Selling property from abroad", code: "01" },
+    { src: "/slider/services/company-formation.png", alt: isArabic ? "تأسيس شركة أردنية" : "Forming a Jordanian company", code: "02" },
+    { src: "/slider/services/court-representation.png", alt: isArabic ? "تمثيل أمام المحاكم الأردنية" : "Representation before Jordanian courts", code: "03" },
+    { src: "/slider/services/power-of-attorney.png", alt: isArabic ? "إصدار توكيل رسمي" : "Issuing a power of attorney", code: "04" },
+    { src: "/slider/services/document-authentication.png", alt: isArabic ? "تصديق المستندات" : "Document authentication", code: "05" },
+    { src: "/slider/services/civil-record-update.png", alt: isArabic ? "تحديث قيد الأحوال المدنية" : "Updating civil status records", code: "06" },
+    { src: "/slider/services/inheritance-estate.png", alt: isArabic ? "افتتاح تركة وميراث" : "Opening an inheritance estate", code: "07" },
   ];
 
   useEffect(() => {
     if (sliderPaused) return;
-    const id = window.setInterval(() => setActiveSlide((current) => (current + 1) % slides.length), 5000);
+    const id = window.setInterval(() => setActiveSlide((current) => (current + 1) % slides.length), 6800);
     return () => window.clearInterval(id);
   }, [slides.length, sliderPaused]);
 
@@ -333,7 +334,7 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
               </div>
             </div>
           </div>
-          <div className="hero-caption page-width"><span>JORDAN / REMOTE LEGAL SERVICES</span><span>01 — THE ROUTE</span></div>
+          <div className="hero-caption page-width"><span>JORDAN / REMOTE LEGAL SERVICES</span><span>03 — {isArabic ? "كتالوج الخدمات" : "SERVICE CATALOG"}</span></div>
         </section>
 
         <section className="route-band" id="matters" data-reveal>
