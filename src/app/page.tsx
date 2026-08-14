@@ -325,32 +325,7 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
               >
                 {slides.map((slide, index) => (
                   <img key={slide.src} src={slide.src} alt={slide.alt} className={index === activeSlide ? "is-active" : ""} aria-hidden={index !== activeSlide} />
-                ))}
-                <div className="hero-visual-label"><span className="pulse" /> {isArabic ? "من السؤال إلى فهم أوضح" : "FROM QUESTION TO CLEARER UNDERSTANDING"}</div>
-                <div className="contract-sheet" aria-label={isArabic ? "مثال توضيحي لعقد عمل" : "Illustrative employment contract example"}>
-                  <div className="contract-masthead"><span>{isArabic ? "نموذج توضيحي" : "ILLUSTRATIVE MODEL"}</span><strong>{isArabic ? "عقد عمل" : "Employment Contract"}</strong><small>١ / ٣</small></div>
-                  <div className="contract-meta"><span>{isArabic ? "بين: الطرف الأول والطرف الثاني" : "Between: First Party and Second Party"}</span><span>{isArabic ? "التاريخ: ١٤ / ٠٨ / ٢٠٢٦" : "Date: 14 / 08 / 2026"}</span></div>
-                  <h4>{isArabic ? "عقد عمل محدد المدة" : "Fixed-term employment contract"}</h4>
-                  <p className="contract-intro">{isArabic ? "تم الاتفاق بين الطرفين على البنود الآتية، وتُفهم هذه الصفحة كجزء من نموذج تعليمي مبسّط." : "The parties agree to the following clauses. This page is an educational example."}</p>
-                  <div className="contract-clause"><b>١.</b><span>{isArabic ? "يلتزم الطرف الثاني بأداء المهام المتفق عليها خلال مدة العقد." : "The second party performs the agreed duties during the contract term."}</span></div>
-                  <div className="contract-clause"><b>٢.</b><span>{isArabic ? "تُحدّد ساعات العمل والأجر وأي تعديل خطي بين الطرفين." : "Working hours, pay, and written amendments are defined by both parties."}</span></div>
-                  <div className="contract-clause contract-clause--focus"><b>٣.</b><span>{isArabic ? "يخضع إنهاء العقد إلى الشروط والإشعارات المنصوص عليها في القانون." : "Termination is subject to the conditions and notices required by law."}</span></div>
-                  <div className="contract-signatures"><span>{isArabic ? "توقيع الطرف الأول" : "First party signature"}</span><span>{isArabic ? "توقيع الطرف الثاني" : "Second party signature"}</span></div>
-                  <div className="contract-disclaimer">{isArabic ? "مثال تعليمي — ليس عقداً قانونياً حقيقياً" : "Educational example — not a real legal contract"}</div>
-                </div>
-                <div className="document-live-layer" aria-hidden="true">
-                  <div className="live-scan-line" />
-                  <span className="live-highlight live-highlight--one" />
-                  <span className="live-highlight live-highlight--two" />
-                  <span className="live-highlight live-highlight--three" />
-                  <div className="live-status live-status--reading"><span className="live-status-dot" /> {isArabic ? "جارٍ فهم الوثيقة" : "Understanding document"}</div>
-                  <div className="live-status live-status--done"><Check size={13} /> {isArabic ? "تم ترتيب النقاط المهمة" : "Key points organized"}</div>
-                  <div className="live-result"><span><Sparkles size={13} /> {isArabic ? "ملخص واضح" : "Clear summary"}</span><strong>{isArabic ? "٣ نقاط تساعدك على اتخاذ الخطوة التالية" : "3 points to help you take the next step"}</strong><div className="result-bars"><i /><i /><i /></div></div>
-                </div>
-                <div className="visual-overlay visual-overlay--question"><span>{isArabic ? "سؤال قانوني" : "LEGAL QUESTION"}</span><strong>{isArabic ? "هل هذا ينطبق على حالتي؟" : "Does this apply to my case?"}</strong></div>
-                <div className="visual-overlay visual-overlay--answer"><span><Sparkles size={14} /> {isArabic ? "شرح مبسّط" : "SIMPLIFIED EXPLANATION"}</span><strong>{isArabic ? "حقوقي · التزاماتي · خطوتي التالية" : "Rights · obligations · next step"}</strong></div>
-                <div className="hero-stamp"><ShieldCheck size={17} /><span>{isArabic ? "خصوصيتك محفوظة" : "Your privacy is protected"}</span></div>
-                <span className="hero-slide-badge">{sliderPaused ? (isArabic ? "متوقف للقراءة" : "PAUSED FOR READING") : "WAKEELY / LEGAL JOURNEY"}</span>
+                ))}                <span className="hero-slide-badge">{sliderPaused ? (isArabic ? "متوقف للقراءة" : "PAUSED FOR READING") : "WAKEELY / LEGAL JOURNEY"}</span>
               </div>
               <div className="hero-slide-toolbar">
                 <button type="button" onClick={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} aria-label={isArabic ? "الصورة السابقة" : "Previous slide"}>←</button>
