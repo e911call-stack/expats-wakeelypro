@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Scale, Building2, KeyRound, ScrollText, Users, Briefcase, Gavel,
-  FileCheck2, Clock, Globe, Loader2, ArrowLeft, ArrowRight,
+  FileCheck2, Clock, Globe, Loader2, ArrowLeft, ArrowRight, Search, X,
 } from "lucide-react";
 
 type ProcedureChoice = { ar: string; en: string; slug: string; promptAr: string; promptEn: string };
@@ -102,9 +102,20 @@ export default function ServicesPage() {
   const ar = locale === "ar";
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const orderedServices = orderServices(services);
-  const primaryServices = orderedServices.slice(0, Math.min(7, orderedServices.length));
-  const additionalServices = orderedServices.slice(7);
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+  const matches = (value: string) => value.toLocaleLowerCase().includes(normalizedQuery);
+  const filteredServices = normalizedQuery
+    ? orderedServices.filter((service) => [service.nameAr, service.nameEn, service.shortAr, service.shortEn, service.descriptionAr, service.descriptionEn, service.practiceArea?.nameAr ?? "", service.practiceArea?.nameEn ?? ""].some(matches))
+    : orderedServices;
+  const primaryServices = filteredServices.slice(0, Math.min(7, filteredServices.length));
+  const additionalServices = filteredServices.slice(7);
+  const filteredCategories = normalizedQuery ? CATEGORIES.map((category) => {
+    const categoryMatches = matches(category.ar) || matches(category.en);
+    const choices = categoryMatches ? category.choices : category.choices.filter((choice) => [choice.ar, choice.en, choice.promptAr, choice.promptEn].some(matches));
+    return { category, choices };
+  }).filter(({ choices }) => choices.length > 0) : CATEGORIES.map((category) => ({ category, choices: category.choices }));
 
   useEffect(() => {
     fetch("/api/legal/services").then((r) => r.json()).then((d) => setServices(d.services ?? [])).catch(() => setServices([])).finally(() => setLoading(false));
@@ -119,8 +130,17 @@ export default function ServicesPage() {
           <h1 className="text-3xl font-bold sm:text-4xl">{ar ? "الخدمات القانونية الأردنية" : "Jordanian legal services"}</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{ar ? "كل خدمة لها إجراء رسمي صريح، قائمة مستندات، ومصادر حكومية. الذكاء الاصطناعي لا يخترع خدمات خارج هذا الكتالوج." : "Each service has an explicit official procedure, document checklist, and government sources. The AI does not invent services outside this catalog."}</p>
         </div>
+        <div className="mb-8 rounded-2xl border border-primary/15 bg-white/70 p-4 shadow-sm sm:p-5">
+          <label htmlFor="service-search" className="mb-2 block text-sm font-semibold">{ar ? "ابحث عن خدمة أو إجراء" : "Search for a service or procedure"}</label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" aria-hidden="true" />
+            <input id="service-search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={ar ? "مثال: عقار، وكالة، تصديق، تركة..." : "Example: property, power of attorney, authentication..."} className="h-12 w-full rounded-xl border border-primary/25 bg-cream ps-10 pe-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" type="search" />
+            {searchQuery && <button type="button" onClick={() => setSearchQuery("")} className="absolute end-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-primary/10 hover:text-primary" aria-label={ar ? "مسح البحث" : "Clear search"}><X className="h-4 w-4" /></button>}
+          </div>
+          {normalizedQuery && <p className="mt-3 text-xs text-muted-foreground">{ar ? `تم العثور على ${filteredServices.length} خدمة و${filteredCategories.reduce((total, item) => total + item.choices.length, 0)} إجراء` : `${filteredServices.length} services and ${filteredCategories.reduce((total, item) => total + item.choices.length, 0)} procedures found`}</p>}
+        </div>
         {loading ? <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div> : <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{primaryServices.map((s) => <ServiceCard key={s.id} service={s} ar={ar} />)}</div>
+          {primaryServices.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{primaryServices.map((s) => <ServiceCard key={s.id} service={s} ar={ar} />)}</div> : <EmptySearch ar={ar} />}
           {additionalServices.length > 0 && <div className="mt-14 border-t border-border pt-10">
             <Badge variant="secondary" className="mb-3">{ar ? "خدمات إضافية" : "Additional services"}</Badge>
             <h2 className="mb-6 text-xl font-bold">{ar ? "المزيد من الخدمات والإجراءات" : "More services and procedures"}</h2>
@@ -134,18 +154,22 @@ export default function ServicesPage() {
         <h2 className="text-2xl font-bold sm:text-3xl">{ar ? "ماذا تريد أن تنجز في الأردن؟" : "What do you want to accomplish in Jordan?"}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">{ar ? "اختر المجال ثم الإجراء الأقرب لاحتياجك. سينقلك كل خيار إلى نموذج استقبال لجمع بياناتك الأساسية وفهم طلبك قبل ربطه بالخدمة المناسبة." : "Choose a category and the procedure closest to your need. Each choice opens an intake form to collect your basic details and understand your request before matching it to the right service."}</p>
         <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {CATEGORIES.map((category) => <CategoryCard key={category.en} category={category} ar={ar} />)}
+          {filteredCategories.length > 0 ? filteredCategories.map(({ category, choices }) => <CategoryCard key={category.en} category={category} choices={choices} ar={ar} />) : <EmptySearch ar={ar} />}
         </div>
       </section>
     </div>
   );
 }
 
-function CategoryCard({ category, ar }: { category: ServiceCategory; ar: boolean }) {
+function EmptySearch({ ar }: { ar: boolean }) {
+  return <div className="rounded-2xl border border-dashed border-primary/25 bg-white/60 px-6 py-10 text-center text-sm text-muted-foreground">{ar ? "لم نعثر على خدمة مطابقة. جرّب كلمة مختلفة." : "No matching service was found. Try a different search term."}</div>;
+}
+
+function CategoryCard({ category, choices, ar }: { category: ServiceCategory; choices: ProcedureChoice[]; ar: boolean }) {
   const Icon = category.icon;
   return <Card className="overflow-hidden border-primary/15"><CardContent className="p-0">
     <div className="flex items-center gap-3 border-b bg-primary/5 px-5 py-4"><div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></div><div><h2 className="font-bold">{ar ? category.ar : category.en}</h2><p className="text-xs text-muted-foreground">{ar ? "اختر الإجراء" : "Choose a procedure"}</p></div></div>
-    <div className="divide-y">{category.choices.map((choice) => <Link key={choice.ar} href={`/intake?category=${encodeURIComponent(category.en)}&service=${encodeURIComponent(choice.slug)}&promptAr=${encodeURIComponent(choice.promptAr)}&promptEn=${encodeURIComponent(choice.promptEn)}`} className="group flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-primary/5"><span>{ar ? choice.ar : choice.en}</span>{ar ? <ArrowLeft className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-x-1" /> : <ArrowRight className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" />}</Link>)}</div>
+    <div className="divide-y">{choices.map((choice) => <Link key={choice.ar} href={`/intake?category=${encodeURIComponent(category.en)}&service=${encodeURIComponent(choice.slug)}&promptAr=${encodeURIComponent(choice.promptAr)}&promptEn=${encodeURIComponent(choice.promptEn)}`} className="group flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-primary/5"><span>{ar ? choice.ar : choice.en}</span>{ar ? <ArrowLeft className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-x-1" /> : <ArrowRight className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" />}</Link>)}</div>
   </CardContent></Card>;
 }
 
