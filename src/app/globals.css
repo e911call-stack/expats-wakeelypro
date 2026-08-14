@@ -1619,3 +1619,102 @@ body.landing-active > footer {
     height: min(125vw, 520px);
   }
 }
+
+/* Responsive mobile navigation refinement: centered, balanced, and safe on narrow screens. */
+@media (max-width: 640px) {
+  .mobile-drawer {
+    inset-block: 0;
+    width: min(90vw, 390px);
+    padding: 18px 18px calc(92px + env(safe-area-inset-bottom));
+    border-radius: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  [dir="ltr"] .mobile-drawer { inset-block: 0; }
+
+  .mobile-drawer-head {
+    min-height: 58px;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 14px;
+  }
+
+  .mobile-drawer-head .brand-image {
+    width: min(172px, calc(100% - 56px));
+    height: 58px;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .mobile-drawer-head button {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .mobile-drawer nav {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .mobile-drawer nav a {
+    grid-template-columns: 28px minmax(0, 1fr) 20px;
+    min-height: 62px;
+    gap: 10px;
+    padding-block: 8px;
+  }
+
+  .mobile-drawer nav a strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: clamp(18px, 5vw, 21px);
+    line-height: 1.2;
+  }
+
+  .mobile-drawer-index {
+    text-align: center;
+  }
+
+  .mobile-drawer-cta {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 20px;
+    border-radius: 10px;
+    padding-inline: 16px;
+    text-align: center;
+    line-height: 1.35;
+  }
+
+  .mobile-bottom-nav {
+    min-height: 72px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-bottom-nav a,
+  .mobile-bottom-nav button {
+    width: 100%;
+    min-height: 52px;
+    padding: 4px 2px;
+    gap: 3px;
+    text-align: center;
+    line-height: 1.15;
+  }
+
+  .mobile-bottom-nav > button:nth-child(3) {
+    width: 56px;
+    height: 56px;
+    margin: -15px auto 0;
+    align-self: start;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-drawer { width: 94vw; padding-inline: 14px; }
+  .mobile-drawer-head .brand-image { width: min(154px, calc(100% - 52px)); }
+  .mobile-drawer nav a strong { font-size: 17px; }
+  .mobile-bottom-nav a, .mobile-bottom-nav button { font-size: 9px; }
+}
