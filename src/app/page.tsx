@@ -27,14 +27,13 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { LandingDisclaimerGate, LANDING_DISCLAIMER_SESSION_KEY } from "@/components/landing-disclaimer-gate";
 
 const markAsset = "/expat-legal-services-logo.png";
 const heroAsset = "/manus-storage/wakeely-hero-editorial.svg";
 const servicesAsset = "/manus-storage/wakeely-services.svg";
 const bridgeAsset = "/manus-storage/wakeely-bridge.svg";
-const routeAsset = "/manus-storage/wakeely-route.svg";
+const routeAsset = "/legal-journey-arabic-infographic.webp";
 const sitePath = (path: string) => path;
 
 type Language = "ar" | "en";
@@ -348,7 +347,7 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
             <div className="process-grid">
               {[{number:"01", icon:Globe2, title:t.step1, body:t.step1Body}, {number:"02", icon:Sparkles, title:t.step2, body:t.step2Body}, {number:"03", icon:FileCheck2, title:t.step3, body:t.step3Body}].map(({number, icon: Icon, title, body}) => <article className="process-card" data-reveal key={number}><div className="process-card-top"><span>{number}</span><span className="process-icon"><Icon size={19} /></span></div><h3>{title}</h3><p>{body}</p><button className="process-card-action" type="button" onClick={openIntake}><DirectionArrow size={15} /></button></article>)}
             </div>
-            <div className="route-visual" data-reveal><div className="route-visual-copy"><span className="section-kicker">ROUTE / EVIDENCE</span><strong>{isArabic ? "ثلاث نقاط تحقق قبل أن يبدأ العمل" : "Three checkpoints before the work begins"}</strong><span>{isArabic ? "مسار موثق، واضح، وقابل للمتابعة." : "A documented route that stays clear and traceable."}</span></div><div className="route-visual-map"><img src={routeAsset} alt={isArabic ? "مخطط بصري لمسار المعاملة من التوجيه إلى الإنجاز" : "Visual route from orientation to completion"} /><div className="route-hotspots" aria-label={isArabic ? "نقاط التحقق في المسار" : "Route checkpoints"}>{[0, 1, 2].map((index) => <Tooltip key={index}><TooltipTrigger asChild><button className={`route-hotspot route-hotspot--${index + 1}`} type="button" aria-label={isArabic ? `نقطة التحقق ${index + 1}` : `Checkpoint ${index + 1}`}><span>{String(index + 1).padStart(2, "0")}</span></button></TooltipTrigger><TooltipContent side="top" className="route-tooltip" dir={isArabic ? "rtl" : "ltr"}>{t.routeHints[index + 1]}</TooltipContent></Tooltip>)}</div></div></div>
+            <div className="route-visual route-visual--infographic" data-reveal><div className="route-visual-copy"><span className="section-kicker">ROUTE / EVIDENCE</span><strong>{isArabic ? "ثلاث نقاط تحقق قبل أن يبدأ العمل" : "Three checkpoints before the work begins"}</strong><span>{isArabic ? "مسار موثق، واضح، وقابل للمتابعة." : "A documented route that stays clear and traceable."}</span></div><div className="route-visual-map"><img src={routeAsset} alt={isArabic ? "مخطط بصري لمسار المعاملة من التوجيه إلى الإنجاز" : "Visual route from orientation to completion"} /></div></div>
           </div>
         </section>
 

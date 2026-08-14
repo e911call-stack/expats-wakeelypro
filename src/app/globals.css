@@ -1436,3 +1436,36 @@ body.landing-active > footer {
     text-align: start;
   }
 }
+
+/* Supplied Arabic infographic: preserve the full artwork instead of cropping it like the former route map. */
+.route-visual--infographic { grid-template-columns: .62fr 1.38fr; background: var(--paper); }
+.route-visual--infographic .route-visual-copy { background: var(--paper-warm); }
+.route-visual--infographic .route-visual-map { min-height: 0; display: flex; align-items: center; justify-content: center; padding: 14px; background: #eef8fb; }
+.route-visual--infographic .route-visual-map img { width: 100%; height: auto; min-height: 0; max-height: 420px; display: block; object-fit: contain; object-position: center; opacity: 1; }
+@media (max-width: 760px) {
+  .route-visual--infographic .route-visual-map { min-height: 0; padding: 10px; }
+  .route-visual--infographic .route-visual-map img { max-height: none; }
+}
+.dark .route-visual--infographic .route-visual-map { background: #e9f3f5; }
+.dark .route-visual--infographic .route-visual-map img { mix-blend-mode: normal; opacity: 1; }
+
+/* Keep the infographic readable in Arabic-first presentation while avoiding duplicate route controls. */
+[dir="rtl"] .route-visual--infographic { grid-template-columns: 1.38fr .62fr; }
+[dir="rtl"] .route-visual--infographic .route-visual-copy { border-inline-end: 0; border-inline-start: 1px solid var(--line); }
+@media (max-width: 760px) {
+  [dir="rtl"] .route-visual--infographic { grid-template-columns: 1fr; }
+  [dir="rtl"] .route-visual--infographic .route-visual-copy { border-inline-start: 0; border-bottom: 1px solid var(--line); }
+}
+
+/* The supplied artwork already contains its own visual checkpoints. */
+.route-visual--infographic .route-hotspots { display: none; }
+
+/* The infographic is a complete explanatory composition; let it lead the section at full width. */
+.route-visual--infographic { display: block; }
+.route-visual--infographic .route-visual-copy { display: none; }
+.route-visual--infographic .route-visual-map { width: 100%; min-height: 0; padding: 18px; }
+.route-visual--infographic .route-visual-map img { max-width: 1180px; max-height: 560px; margin: 0 auto; }
+@media (max-width: 760px) {
+  .route-visual--infographic .route-visual-map { padding: 8px; }
+  .route-visual--infographic .route-visual-map img { width: 100%; max-height: none; }
+}
