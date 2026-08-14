@@ -326,6 +326,30 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
                 {slides.map((slide, index) => (
                   <img key={slide.src} src={slide.src} alt={slide.alt} className={index === activeSlide ? "is-active" : ""} aria-hidden={index !== activeSlide} />
                 ))}
+                <div className="hero-visual-label"><span className="pulse" /> {isArabic ? "من السؤال إلى فهم أوضح" : "FROM QUESTION TO CLEARER UNDERSTANDING"}</div>
+                <div className="contract-sheet" aria-label={isArabic ? "مثال توضيحي لعقد عمل" : "Illustrative employment contract example"}>
+                  <div className="contract-masthead"><span>{isArabic ? "نموذج توضيحي" : "ILLUSTRATIVE MODEL"}</span><strong>{isArabic ? "عقد عمل" : "Employment Contract"}</strong><small>١ / ٣</small></div>
+                  <div className="contract-meta"><span>{isArabic ? "بين: الطرف الأول والطرف الثاني" : "Between: First Party and Second Party"}</span><span>{isArabic ? "التاريخ: ١٤ / ٠٨ / ٢٠٢٦" : "Date: 14 / 08 / 2026"}</span></div>
+                  <h4>{isArabic ? "عقد عمل محدد المدة" : "Fixed-term employment contract"}</h4>
+                  <p className="contract-intro">{isArabic ? "تم الاتفاق بين الطرفين على البنود الآتية، وتُفهم هذه الصفحة كجزء من نموذج تعليمي مبسّط." : "The parties agree to the following clauses. This page is an educational example."}</p>
+                  <div className="contract-clause"><b>١.</b><span>{isArabic ? "يلتزم الطرف الثاني بأداء المهام المتفق عليها خلال مدة العقد." : "The second party performs the agreed duties during the contract term."}</span></div>
+                  <div className="contract-clause"><b>٢.</b><span>{isArabic ? "تُحدّد ساعات العمل والأجر وأي تعديل خطي بين الطرفين." : "Working hours, pay, and written amendments are defined by both parties."}</span></div>
+                  <div className="contract-clause contract-clause--focus"><b>٣.</b><span>{isArabic ? "يخضع إنهاء العقد إلى الشروط والإشعارات المنصوص عليها في القانون." : "Termination is subject to the conditions and notices required by law."}</span></div>
+                  <div className="contract-signatures"><span>{isArabic ? "توقيع الطرف الأول" : "First party signature"}</span><span>{isArabic ? "توقيع الطرف الثاني" : "Second party signature"}</span></div>
+                  <div className="contract-disclaimer">{isArabic ? "مثال تعليمي — ليس عقداً قانونياً حقيقياً" : "Educational example — not a real legal contract"}</div>
+                </div>
+                <div className="document-live-layer" aria-hidden="true">
+                  <div className="live-scan-line" />
+                  <span className="live-highlight live-highlight--one" />
+                  <span className="live-highlight live-highlight--two" />
+                  <span className="live-highlight live-highlight--three" />
+                  <div className="live-status live-status--reading"><span className="live-status-dot" /> {isArabic ? "جارٍ فهم الوثيقة" : "Understanding document"}</div>
+                  <div className="live-status live-status--done"><Check size={13} /> {isArabic ? "تم ترتيب النقاط المهمة" : "Key points organized"}</div>
+                  <div className="live-result"><span><Sparkles size={13} /> {isArabic ? "ملخص واضح" : "Clear summary"}</span><strong>{isArabic ? "٣ نقاط تساعدك على اتخاذ الخطوة التالية" : "3 points to help you take the next step"}</strong><div className="result-bars"><i /><i /><i /></div></div>
+                </div>
+                <div className="visual-overlay visual-overlay--question"><span>{isArabic ? "سؤال قانوني" : "LEGAL QUESTION"}</span><strong>{isArabic ? "هل هذا ينطبق على حالتي؟" : "Does this apply to my case?"}</strong></div>
+                <div className="visual-overlay visual-overlay--answer"><span><Sparkles size={14} /> {isArabic ? "شرح مبسّط" : "SIMPLIFIED EXPLANATION"}</span><strong>{isArabic ? "حقوقي · التزاماتي · خطوتي التالية" : "Rights · obligations · next step"}</strong></div>
+                <div className="hero-stamp"><ShieldCheck size={17} /><span>{isArabic ? "خصوصيتك محفوظة" : "Your privacy is protected"}</span></div>
                 <span className="hero-slide-badge">{sliderPaused ? (isArabic ? "متوقف للقراءة" : "PAUSED FOR READING") : "WAKEELY / LEGAL JOURNEY"}</span>
               </div>
               <div className="hero-slide-toolbar">
@@ -341,39 +365,6 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           <div className="hero-caption page-width"><span>JORDAN / REMOTE LEGAL SERVICES</span><span>03 — {isArabic ? "كتالوج الخدمات" : "SERVICE CATALOG"}</span></div>
         </section>
 
-        <section className="clarity-section" data-reveal>
-          <div className="page-width clarity-grid">
-            <div className="clarity-copy">
-              <span className="clarity-kicker">{isArabic ? "محتوى يشرح، لا يخوف" : "CONTENT THAT EXPLAINS, NEVER INTIMIDATES"}</span>
-              <h2 className="clarity-headline"><span>{isArabic ? "حين يصبح القانون" : "When the law becomes"}</span><br /><em>{isArabic ? "أقرب إلى لغتك." : "closer to your language."}</em></h2>
-              <p>{isArabic ? "ضمّنا كل إجابة وكل تقرير ليمنحك صورة أوضح عما يعنيه القانون بالنسبة لك، من دون أن يحمّلك لغة قانونية معقدة." : "Every answer and report is designed to give you a clearer picture of what the law means for you, without burying you in complicated legal language."}</p>
-              <div className="clarity-points" role="list">
-                <span role="listitem"><ShieldCheck size={17} />{isArabic ? "وضوح قبل التعقيد" : "Clarity before complexity"}</span>
-                <span role="listitem"><BookOpen size={17} />{isArabic ? "مصادر عند توفرها" : "Sources when available"}</span>
-                <span role="listitem"><ArrowUpRight size={17} />{isArabic ? "خطوة تالية مفهومة" : "A clear next step"}</span>
-              </div>
-            </div>
-            <div className="clarity-visual" aria-label={isArabic ? "محاكاة تحليل مستند قانوني" : "Animated legal document analysis preview"}>
-              <div className="clarity-paper">
-                <div className="clarity-paper-head"><span>WakeelyPro</span><span>{isArabic ? "ملخص الحالة" : "CASE SUMMARY"}</span></div>
-                <div className="clarity-paper-rule" />
-                <h3>{isArabic ? "هل أستطيع فسخ العقد؟" : "Can I terminate the contract?"}</h3>
-                <div className="clarity-skeleton"><i /><i /><i /></div>
-                <div className="clarity-findings">
-                  <div><b>{isArabic ? "الحقوق" : "RIGHTS"}</b><span>{isArabic ? "ما يمكنك المطالبة به" : "What you may claim"}</span></div>
-                  <div><b>{isArabic ? "الالتزامات" : "OBLIGATIONS"}</b><span>{isArabic ? "ما يجب الانتباه إليه" : "What to watch"}</span></div>
-                  <div><b>{isArabic ? "الخطوة التالية" : "NEXT STEP"}</b><span>{isArabic ? "ما يمكنك فعله الآن" : "What you can do now"}</span></div>
-                </div>
-                <div className="clarity-insight"><Sparkles size={15} /><span>{isArabic ? "هذا شرح أولي يساعدك على فهم موقفك." : "A first explanation to help you understand your position."}</span></div>
-                <div className="clarity-alert"><AlertTriangle size={16} /><div><b>{isArabic ? "تنبيه في العقد" : "CONTRACT ALERT"}</b><span>{isArabic ? "بند الإنهاء قد يفرض إشعاراً مسبقاً قبل 30 يوماً." : "The termination clause may require 30 days’ prior notice."}</span></div></div>
-                <div className="clarity-scan-line" />
-                <div className="clarity-status clarity-status--scan">{isArabic ? "جارٍ تحليل المستند" : "Scanning document"}</div>
-                <div className="clarity-status clarity-status--done">{isArabic ? "اكتمل التحليل" : "Scanning complete"}</div>
-                <div className="clarity-status clarity-status--found">{isArabic ? "وجدنا ٣ نقاط مهمة" : "3 key points found"}</div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <section className="route-band" id="matters" data-reveal>
           <div className="page-width route-band-inner"><div className="route-band-label"><span className="route-band-line" /> {t.howKicker}</div><p>{t.howBody}</p><div className="route-band-mark">W / 01</div></div>
