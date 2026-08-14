@@ -8,11 +8,14 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  Building2,
+  Briefcase,
   Check,
   ChevronDown,
   FileCheck2,
   FileText,
   Globe2,
+  KeyRound,
   Languages,
   Landmark,
   Menu,
@@ -25,6 +28,7 @@ import {
   Sparkles,
   Sun,
   UserRound,
+  Users,
   X,
 } from "lucide-react";
 import { LandingDisclaimerGate, LANDING_DISCLAIMER_SESSION_KEY } from "@/components/landing-disclaimer-gate";
@@ -359,8 +363,32 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           </div>
         </section>
 
-        <section className="trust-section" data-reveal>
-          <div className="page-width"><div className="section-route-label section-route-label--light"><span className="route-node-dot" />04 / {isArabic ? "لماذا نحن" : "TRUST FILE"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="trust-layout"><div className="trust-heading"><span className="section-kicker section-kicker--light">{t.whyKicker}</span><h2>{t.whyTitle}</h2><p>{t.whyBody}</p></div><div className="trust-items"><div className="trust-item"><span>01</span><div><h3>{t.noInvent}</h3><p>{t.noInventBody}</p></div><Check size={17} /></div><div className="trust-item"><span>02</span><div><h3>{t.eligibility}</h3><p>{t.eligibilityBody}</p></div><Check size={17} /></div><div className="trust-item"><span>03</span><div><h3>{t.fees}</h3><p>{t.feesBody}</p></div><Check size={17} /></div><div className="trust-item"><span>04</span><div><h3>{t.language}</h3><p>{t.languageBody}</p></div><Check size={17} /></div></div></div></div>
+        <section className="featured-services-section" data-reveal>
+          <div className="page-width">
+            <div className="section-route-label"><span className="route-node-dot" />04 / {isArabic ? "خدمات مختارة" : "FEATURED SERVICES"}<span className="route-line" /><ArrowDownRight size={14} /></div>
+            <div className="section-heading centered">
+              <span className="section-kicker">{isArabic ? "خدماتنا الأكثر طلباً" : "OUR MOST REQUESTED SERVICES"}</span>
+              <h2>{isArabic ? "ابدأ معاملتك القانونية الآن" : "Start your legal transaction now"}</h2>
+              <p>{isArabic ? "اختر من بين خدماتنا الأكثر شيوعاً للمغتربين، أو تصفح الكتالوج الكامل للوصول إلى أكثر من 30 إجراءً قانونياً." : "Choose from our most common services for expats, or browse the full catalog to access over 30 legal procedures."}</p>
+            </div>
+            <div className="featured-services-grid">
+              {[
+                { slug: "property-sale-from-abroad", title: isArabic ? "بيع العقار من الخارج" : "Property sale from abroad", icon: Building2 },
+                { slug: "power-of-attorney", title: isArabic ? "إصدار توكيل رسمي" : "Power of attorney", icon: KeyRound },
+                { slug: "inheritance-initiation", title: isArabic ? "افتتاح تركة وميراث" : "Inheritance & estate", icon: Users },
+                { slug: "company-formation", title: isArabic ? "تأسيس شركة أردنية" : "Company formation", icon: Briefcase }
+              ].map((service) => (
+                <a key={service.slug} href={sitePath(`/services/${service.slug}`)} className="featured-service-card" data-reveal>
+                  <div className="featured-service-icon"><service.icon size={24} /></div>
+                  <h3>{service.title}</h3>
+                  <span className="featured-service-link">{isArabic ? "عرض التفاصيل" : "View details"} <DirectionArrow size={14} /></span>
+                </a>
+              ))}
+            </div>
+            <div className="featured-services-footer">
+              <a className="secondary-action" href={sitePath("/services")}>{t.viewAll}<DirectionArrow size={16} /></a>
+            </div>
+          </div>
         </section>
 
         <section className="bridge-section" data-reveal>
