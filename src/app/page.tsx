@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  AlertTriangle,
   BookOpen,
   Building2,
   Briefcase,
@@ -344,12 +345,12 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           <div className="page-width clarity-grid">
             <div className="clarity-copy">
               <span className="clarity-kicker">{isArabic ? "محتوى يشرح، لا يخوف" : "CONTENT THAT EXPLAINS, NEVER INTIMIDATES"}</span>
-              <h2>{isArabic ? <>حين يصبح القانون<br />أقرب إلى لغتك.</> : <>When the law becomes<br />closer to your language.</>}</h2>
+              <h2 className="clarity-headline"><span>{isArabic ? "حين يصبح القانون" : "When the law becomes"}</span><br /><em>{isArabic ? "أقرب إلى لغتك." : "closer to your language."}</em></h2>
               <p>{isArabic ? "ضمّنا كل إجابة وكل تقرير ليمنحك صورة أوضح عما يعنيه القانون بالنسبة لك، من دون أن يحمّلك لغة قانونية معقدة." : "Every answer and report is designed to give you a clearer picture of what the law means for you, without burying you in complicated legal language."}</p>
-              <div className="clarity-points">
-                <span><ShieldCheck size={17} />{isArabic ? "وضوح قبل التعقيد" : "Clarity before complexity"}</span>
-                <span><BookOpen size={17} />{isArabic ? "مصادر عند توفرها" : "Sources when available"}</span>
-                <span><ArrowUpRight size={17} />{isArabic ? "خطوة تالية مفهومة" : "A clear next step"}</span>
+              <div className="clarity-points" role="list">
+                <span role="listitem"><ShieldCheck size={17} />{isArabic ? "وضوح قبل التعقيد" : "Clarity before complexity"}</span>
+                <span role="listitem"><BookOpen size={17} />{isArabic ? "مصادر عند توفرها" : "Sources when available"}</span>
+                <span role="listitem"><ArrowUpRight size={17} />{isArabic ? "خطوة تالية مفهومة" : "A clear next step"}</span>
               </div>
             </div>
             <div className="clarity-visual" aria-label={isArabic ? "محاكاة تحليل مستند قانوني" : "Animated legal document analysis preview"}>
@@ -364,6 +365,7 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
                   <div><b>{isArabic ? "الخطوة التالية" : "NEXT STEP"}</b><span>{isArabic ? "ما يمكنك فعله الآن" : "What you can do now"}</span></div>
                 </div>
                 <div className="clarity-insight"><Sparkles size={15} /><span>{isArabic ? "هذا شرح أولي يساعدك على فهم موقفك." : "A first explanation to help you understand your position."}</span></div>
+                <div className="clarity-alert"><AlertTriangle size={16} /><div><b>{isArabic ? "تنبيه في العقد" : "CONTRACT ALERT"}</b><span>{isArabic ? "بند الإنهاء قد يفرض إشعاراً مسبقاً قبل 30 يوماً." : "The termination clause may require 30 days’ prior notice."}</span></div></div>
                 <div className="clarity-scan-line" />
                 <div className="clarity-status clarity-status--scan">{isArabic ? "جارٍ تحليل المستند" : "Scanning document"}</div>
                 <div className="clarity-status clarity-status--done">{isArabic ? "اكتمل التحليل" : "Scanning complete"}</div>
