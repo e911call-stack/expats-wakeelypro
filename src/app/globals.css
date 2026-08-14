@@ -159,9 +159,9 @@
 :root {
   --charcoal: #28231f;
   --charcoal-soft: #4a3d34;
-  --paper: #fdf7e3;
-  --paper-warm: #f6edcf;
-  --paper-deep: #e8d9b7;
+  --paper: #ffffff;
+  --paper-warm: #f4f6f7;
+  --paper-deep: #e7ecef;
   --brass: #006c8e;
   --brass-dark: #00536d;
   --brass-pale: #d6edf3;
@@ -173,20 +173,20 @@
   --line-light: rgba(241, 231, 214, 0.24);
   --muted: #74695e;
   --radius: 0.45rem;
-  --background: #fdf7e3;
+  --background: #ffffff;
   --foreground: #28231f;
-  --card: #fdf7e3;
+  --card: #ffffff;
   --card-foreground: #28231f;
-  --popover: #fdf7e3;
+  --popover: #ffffff;
   --popover-foreground: #28231f;
   --primary: #006c8e;
-  --primary-foreground: #fdf7e3;
-  --secondary: #f6edcf;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f6f7;
   --secondary-foreground: #28231f;
   --accent: #006c8e;
-  --accent-foreground: #fdf7e3;
-  --border: #dfd2b6;
-  --input: #dfd2b6;
+  --accent-foreground: #ffffff;
+  --border: #d8e0e4;
+  --input: #d8e0e4;
   --ring: #006c8e;
 }
 
@@ -850,7 +850,7 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #fdf7e3;
+  background: #ffffff;
   color: #201f1c;
   overflow: auto;
 }
@@ -860,7 +860,7 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   padding: clamp(28px, 6vw, 64px);
   border: 1px solid rgba(0, 108, 142, 0.28);
   border-radius: 24px;
-  background: #fffdf5;
+  background: #f7f9fa;
   box-shadow: 0 24px 80px rgba(32, 31, 28, 0.14);
   text-align: right;
 }
@@ -873,9 +873,8 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   margin-bottom: 22px;
   border-radius: 16px;
   background: #006c8e;
-  color: #fdf7e3;
+    color: #ffffff;
 }
-
 .landing-disclaimer-kicker {
   margin: 0 0 8px;
   color: #006c8e;
@@ -1310,7 +1309,7 @@ body, button, input, select, textarea { font-family: "Tajawal", sans-serif; }
   height: clamp(280px, 27vw, 360px);
   margin-block: 14px 0;
   border: 1px solid rgba(0,108,142,.18);
-  background: linear-gradient(135deg, #f4efe2 0%, #e7dfce 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #e7ecef 100%);
   box-shadow: inset 0 0 0 8px rgba(255,255,255,.28);
 }
 .hero-flow-media img {
@@ -1406,18 +1405,18 @@ body.landing-active > footer {
   z-index: -1;
   background:
     radial-gradient(circle at 12% 18%, rgba(217, 245, 242, 0.18), transparent 28%),
-    radial-gradient(circle at 88% 80%, rgba(253, 247, 227, 0.12), transparent 30%);
+    radial-gradient(circle at 88% 80%, rgba(255, 255, 255, 0.42), transparent 30%);
   pointer-events: none;
 }
 
 .site-footer a:focus-visible {
-  outline: 3px solid #fdf7e3;
+  outline: 3px solid #ffffff;
   outline-offset: 3px;
 }
 
 .site-footer .footer-legal-notice {
   border-color: rgba(0, 81, 107, 0.22);
-  background: #fdf7e3;
+  background: #f4f6f7;
   color: #163c47;
   box-shadow: 0 8px 24px rgba(0, 44, 58, 0.12);
 }
