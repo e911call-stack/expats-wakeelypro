@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/lib/locale-provider";
 import { LegalNotice } from "@/components/legal-disclaimer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,27 @@ import {
 
 type ProcedureChoice = { ar: string; en: string; slug: string; promptAr: string; promptEn: string };
 type ServiceCategory = { ar: string; en: string; icon: typeof Building2; choices: ProcedureChoice[] };
+
+type CategoryFilter = "all" | string;
+
+function normalizeSearchText(value: string) {
+  return value
+    .toLocaleLowerCase()
+    .normalize("NFKC")
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function matchesIntent(query: string, values: string[]) {
+  const tokens = normalizeSearchText(query).split(/\s+/).filter((token) => token.length > 1);
+  if (!tokens.length) return true;
+  const haystack = normalizeSearchText(values.join(" "));
+  return tokens.every((token) => haystack.includes(token));
+}
 
 type Service = {
   id: string; slug: string;
@@ -103,19 +124,18 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
   const orderedServices = orderServices(services);
-  const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
-  const matches = (value: string) => value.toLocaleLowerCase().includes(normalizedQuery);
-  const filteredServices = normalizedQuery
-    ? orderedServices.filter((service) => [service.nameAr, service.nameEn, service.shortAr, service.shortEn, service.descriptionAr, service.descriptionEn, service.practiceArea?.nameAr ?? "", service.practiceArea?.nameEn ?? ""].some(matches))
-    : orderedServices;
-  const primaryServices = filteredServices.slice(0, Math.min(7, filteredServices.length));
-  const additionalServices = filteredServices.slice(7);
-  const filteredCategories = normalizedQuery ? CATEGORIES.map((category) => {
-    const categoryMatches = matches(category.ar) || matches(category.en);
-    const choices = categoryMatches ? category.choices : category.choices.filter((choice) => [choice.ar, choice.en, choice.promptAr, choice.promptEn].some(matches));
-    return { category, choices };
-  }).filter(({ choices }) => choices.length > 0) : CATEGORIES.map((category) => ({ category, choices: category.choices }));
+  const primaryServices = orderedServices.slice(0, Math.min(7, orderedServices.length));
+  const additionalServices = orderedServices.slice(7);
+  const filteredCategories = useMemo(() => CATEGORIES
+    .filter((category) => selectedCategory === "all" || category.en === selectedCategory)
+    .map((category) => ({
+      category,
+      choices: category.choices.filter((choice) => matchesIntent(searchQuery, [category.ar, category.en, choice.ar, choice.en, choice.promptAr, choice.promptEn])),
+    }))
+    .filter(({ choices }) => choices.length > 0), [searchQuery, selectedCategory]);
+  const procedureCount = filteredCategories.reduce((total, item) => total + item.choices.length, 0);
 
   useEffect(() => {
     fetch("/api/legal/services").then((r) => r.json()).then((d) => setServices(d.services ?? [])).catch(() => setServices([])).finally(() => setLoading(false));
@@ -131,16 +151,23 @@ export default function ServicesPage() {
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{ar ? "كل خدمة لها إجراء رسمي صريح، قائمة مستندات، ومصادر حكومية. الذكاء الاصطناعي لا يخترع خدمات خارج هذا الكتالوج." : "Each service has an explicit official procedure, document checklist, and government sources. The AI does not invent services outside this catalog."}</p>
         </div>
         <div className="mb-8 rounded-2xl border border-primary/15 bg-white/70 p-4 shadow-sm sm:p-5">
-          <label htmlFor="service-search" className="mb-2 block text-sm font-semibold">{ar ? "ابحث عن خدمة أو إجراء" : "Search for a service or procedure"}</label>
-          <div className="relative">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div><label htmlFor="service-search" className="block text-sm font-semibold">{ar ? "ابحث عن الإجراء الذي تحتاجه" : "Find the procedure you need"}</label><p className="mt-1 text-xs text-muted-foreground">{ar ? "اختر المجال أولاً أو اكتب ما تريد إنجازه بصياغتك الطبيعية." : "Choose a category first, or describe what you need in your own words."}</p></div>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{ar ? `${procedureCount} إجراء متاح` : `${procedureCount} procedures`}</span>
+          </div>
+          <div className="relative mt-4">
             <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" aria-hidden="true" />
-            <input id="service-search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={ar ? "مثال: عقار، وكالة، تصديق، تركة..." : "Example: property, power of attorney, authentication..."} className="h-12 w-full rounded-xl border border-primary/25 bg-cream ps-10 pe-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" type="search" />
+            <input id="service-search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={ar ? "مثال: أريد بيع عقار، إصدار وكالة، مراجعة عقد..." : "Example: sell a property, issue a power of attorney, review a contract..."} className="h-12 w-full rounded-xl border border-primary/25 bg-cream ps-10 pe-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" type="search" />
             {searchQuery && <button type="button" onClick={() => setSearchQuery("")} className="absolute end-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-primary/10 hover:text-primary" aria-label={ar ? "مسح البحث" : "Clear search"}><X className="h-4 w-4" /></button>}
           </div>
-          {normalizedQuery && <p className="mt-3 text-xs text-muted-foreground">{ar ? `تم العثور على ${filteredServices.length} خدمة و${filteredCategories.reduce((total, item) => total + item.choices.length, 0)} إجراء` : `${filteredServices.length} services and ${filteredCategories.reduce((total, item) => total + item.choices.length, 0)} procedures found`}</p>}
+          <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label={ar ? "تصنيف الإجراءات" : "Procedure categories"}>
+            <button type="button" onClick={() => setSelectedCategory("all")} className={`rounded-full border px-3 py-2 text-xs font-bold transition ${selectedCategory === "all" ? "border-primary bg-primary text-primary-foreground" : "border-primary/20 bg-cream text-foreground hover:border-primary"}`}>{ar ? "كل الإجراءات" : "All procedures"}</button>
+            {CATEGORIES.map((category) => <button key={category.en} type="button" onClick={() => setSelectedCategory(category.en)} className={`rounded-full border px-3 py-2 text-xs font-bold transition ${selectedCategory === category.en ? "border-primary bg-primary text-primary-foreground" : "border-primary/20 bg-cream text-foreground hover:border-primary"}`}>{ar ? category.ar : category.en}<span className="ms-1 opacity-70">{category.choices.length}</span></button>)}
+          </div>
+          {(searchQuery || selectedCategory !== "all") && <p className="mt-3 text-xs text-muted-foreground">{ar ? `تم العثور على ${procedureCount} إجراء مطابق` : `${procedureCount} matching procedures found`}</p>}
         </div>
         {loading ? <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div> : <>
-          {primaryServices.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{primaryServices.map((s) => <ServiceCard key={s.id} service={s} ar={ar} />)}</div> : <EmptySearch ar={ar} />}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{primaryServices.map((s) => <ServiceCard key={s.id} service={s} ar={ar} />)}</div>
           {additionalServices.length > 0 && <div className="mt-14 border-t border-border pt-10">
             <Badge variant="secondary" className="mb-3">{ar ? "خدمات إضافية" : "Additional services"}</Badge>
             <h2 className="mb-6 text-xl font-bold">{ar ? "المزيد من الخدمات والإجراءات" : "More services and procedures"}</h2>

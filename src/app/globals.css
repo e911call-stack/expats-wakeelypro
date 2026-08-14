@@ -1471,3 +1471,100 @@ body.landing-active > footer {
   .route-visual--infographic .route-visual-map { min-height: 0; padding: 10px; }
   .route-visual--infographic .route-visual-map img { max-height: none; }
 }
+
+/* Mobile navigation refinement: centered drawer, consistent rhythm, and equal bottom-nav cells. */
+@media (max-width: 640px) {
+  .mobile-drawer {
+    inset: 76px 12px calc(78px + env(safe-area-inset-bottom)) 12px;
+    width: auto;
+    max-width: none;
+    padding: 18px 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    transform: translateY(-14px) scale(.985);
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 20px 48px rgba(17,21,22,.18);
+  }
+  [dir="ltr"] .mobile-drawer {
+    inset: 76px 12px calc(78px + env(safe-area-inset-bottom)) 12px;
+    border: 1px solid var(--line);
+    transform: translateY(-14px) scale(.985);
+  }
+  .mobile-drawer.is-open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .mobile-drawer-head {
+    position: relative;
+    min-height: 66px;
+    padding: 0 0 16px;
+  }
+  .mobile-drawer-head .brand {
+    justify-content: center;
+    width: 100%;
+    margin-inline: auto;
+  }
+  .mobile-drawer-head .brand-image {
+    width: min(190px, 64vw);
+    height: 62px;
+  }
+  .mobile-drawer-head > button {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+  .mobile-drawer nav {
+    gap: 0;
+    margin-top: 16px;
+  }
+  .mobile-drawer nav a {
+    grid-template-columns: 32px minmax(0, 1fr) 20px;
+    min-height: 58px;
+    gap: 10px;
+    padding: 8px 2px;
+  }
+  .mobile-drawer nav a strong {
+    min-width: 0;
+    font-size: 19px;
+    line-height: 1.25;
+  }
+  .mobile-drawer-cta {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 18px;
+    border-radius: 14px;
+  }
+  .mobile-bottom-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding-inline: 8px;
+  }
+  .mobile-bottom-nav a,
+  .mobile-bottom-nav button {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding-inline: 2px;
+    border-radius: 12px;
+    line-height: 1.1;
+  }
+  .mobile-bottom-nav a span,
+  .mobile-bottom-nav button span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mobile-bottom-nav > button:nth-child(3) {
+    width: 56px;
+    height: 56px;
+    justify-self: center;
+    margin: -14px auto 0;
+    border-radius: 16px;
+  }
+}
