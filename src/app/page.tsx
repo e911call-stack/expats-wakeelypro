@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  BookOpen,
   Building2,
   Briefcase,
   Check,
@@ -35,8 +36,6 @@ import { LandingDisclaimerGate, LANDING_DISCLAIMER_SESSION_KEY } from "@/compone
 
 const markAsset = "/expat-legal-services-logo.png";
 const heroAsset = "/manus-storage/wakeely-hero-editorial.svg";
-const servicesAsset = "/manus-storage/wakeely-services.svg";
-const bridgeAsset = "/manus-storage/wakeely-bridge.svg";
 const routeAsset = "/legal-journey-arabic-infographic.webp";
 const sitePath = (path: string) => path;
 
@@ -341,6 +340,39 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           <div className="hero-caption page-width"><span>JORDAN / REMOTE LEGAL SERVICES</span><span>03 — {isArabic ? "كتالوج الخدمات" : "SERVICE CATALOG"}</span></div>
         </section>
 
+        <section className="clarity-section" data-reveal>
+          <div className="page-width clarity-grid">
+            <div className="clarity-copy">
+              <span className="clarity-kicker">{isArabic ? "محتوى يشرح، لا يخوف" : "CONTENT THAT EXPLAINS, NEVER INTIMIDATES"}</span>
+              <h2>{isArabic ? <>حين يصبح القانون<br />أقرب إلى لغتك.</> : <>When the law becomes<br />closer to your language.</>}</h2>
+              <p>{isArabic ? "ضمّنا كل إجابة وكل تقرير ليمنحك صورة أوضح عما يعنيه القانون بالنسبة لك، من دون أن يحمّلك لغة قانونية معقدة." : "Every answer and report is designed to give you a clearer picture of what the law means for you, without burying you in complicated legal language."}</p>
+              <div className="clarity-points">
+                <span><ShieldCheck size={17} />{isArabic ? "وضوح قبل التعقيد" : "Clarity before complexity"}</span>
+                <span><BookOpen size={17} />{isArabic ? "مصادر عند توفرها" : "Sources when available"}</span>
+                <span><ArrowUpRight size={17} />{isArabic ? "خطوة تالية مفهومة" : "A clear next step"}</span>
+              </div>
+            </div>
+            <div className="clarity-visual" aria-label={isArabic ? "محاكاة تحليل مستند قانوني" : "Animated legal document analysis preview"}>
+              <div className="clarity-paper">
+                <div className="clarity-paper-head"><span>WakeelyPro</span><span>{isArabic ? "ملخص الحالة" : "CASE SUMMARY"}</span></div>
+                <div className="clarity-paper-rule" />
+                <h3>{isArabic ? "هل أستطيع فسخ العقد؟" : "Can I terminate the contract?"}</h3>
+                <div className="clarity-skeleton"><i /><i /><i /></div>
+                <div className="clarity-findings">
+                  <div><b>{isArabic ? "الحقوق" : "RIGHTS"}</b><span>{isArabic ? "ما يمكنك المطالبة به" : "What you may claim"}</span></div>
+                  <div><b>{isArabic ? "الالتزامات" : "OBLIGATIONS"}</b><span>{isArabic ? "ما يجب الانتباه إليه" : "What to watch"}</span></div>
+                  <div><b>{isArabic ? "الخطوة التالية" : "NEXT STEP"}</b><span>{isArabic ? "ما يمكنك فعله الآن" : "What you can do now"}</span></div>
+                </div>
+                <div className="clarity-insight"><Sparkles size={15} /><span>{isArabic ? "هذا شرح أولي يساعدك على فهم موقفك." : "A first explanation to help you understand your position."}</span></div>
+                <div className="clarity-scan-line" />
+                <div className="clarity-status clarity-status--scan">{isArabic ? "جارٍ تحليل المستند" : "Scanning document"}</div>
+                <div className="clarity-status clarity-status--done">{isArabic ? "اكتمل التحليل" : "Scanning complete"}</div>
+                <div className="clarity-status clarity-status--found">{isArabic ? "وجدنا ٣ نقاط مهمة" : "3 key points found"}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="route-band" id="matters" data-reveal>
           <div className="page-width route-band-inner"><div className="route-band-label"><span className="route-band-line" /> {t.howKicker}</div><p>{t.howBody}</p><div className="route-band-mark">W / 01</div></div>
         </section>
@@ -356,16 +388,10 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           </div>
         </section>
 
-        <section className="catalog-section" id="services" data-reveal>
-          <div className="page-width catalog-grid">
-            <div className="catalog-image"><img src={servicesAsset} alt={isArabic ? "مستندات وملف خدمة قانونية" : "Documents and a legal service file"} /><div className="catalog-image-caption"><span>{t.servicesKicker}</span><span>03 / 04</span></div><div className="catalog-stamp">J</div><div className="image-evidence-tag">CASE / 02 <span>JRD — SERVICE FILE</span></div></div>
-            <div className="catalog-copy"><span className="section-kicker">{t.servicesKicker}</span><h2>{t.servicesTitle}</h2><p>{t.servicesBody}</p><div className="catalog-notes"><div><span>01</span><strong>{isArabic ? "إجراء رسمي" : "Formal procedure"}</strong></div><div><span>02</span><strong>{isArabic ? "قائمة مستندات" : "Document list"}</strong></div><div><span>03</span><strong>{isArabic ? "مصادر حكومية" : "Government sources"}</strong></div></div><a className="text-action" href={sitePath("/services")}>{t.viewAll}<DirectionArrow size={16} /></a></div>
-          </div>
-        </section>
 
         <section className="featured-services-section" data-reveal>
           <div className="page-width">
-            <div className="section-route-label"><span className="route-node-dot" />04 / {isArabic ? "خدمات مختارة" : "FEATURED SERVICES"}<span className="route-line" /><ArrowDownRight size={14} /></div>
+            <div className="section-route-label"><span className="route-node-dot" />03 / {isArabic ? "خدمات مختارة" : "FEATURED SERVICES"}<span className="route-line" /><ArrowDownRight size={14} /></div>
             <div className="section-heading centered">
               <span className="section-kicker">{isArabic ? "خدماتنا الأكثر طلباً" : "OUR MOST REQUESTED SERVICES"}</span>
               <h2>{isArabic ? "ابدأ معاملتك القانونية الآن" : "Start your legal transaction now"}</h2>
@@ -391,11 +417,8 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           </div>
         </section>
 
-        <section className="bridge-section" data-reveal>
-          <div className="page-width"><div className="section-route-label"><span className="route-node-dot" />05 / {isArabic ? "من الخارج إلى الأردن" : "ABROAD TO JORDAN"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="bridge-grid"><div className="bridge-image"><img src={bridgeAsset} alt={isArabic ? "مساحة عمل عن بعد تتصل بالأردن" : "A remote workspace connected to Jordan"} /><span>{t.bridgeKicker}</span><div className="image-evidence-tag">CASE / 03 <span>REMOTE / JORDAN</span></div></div><div className="bridge-copy"><span className="section-kicker">05 / {t.bridgeKicker}</span><h2>{t.bridgeTitle}</h2><p>{t.bridgeBody}</p><button className="text-action" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={16} /></button></div></div></div>
-        </section>
 
-        <section className="ready-section" data-reveal><div className="page-width ready-inner"><div className="section-route-label section-route-label--ready"><span className="route-node-dot" />06 / {isArabic ? "الخطوة التالية" : "ARRIVAL CHECKPOINT"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="ready-kicker"><span className="section-kicker">07 / NEXT</span><span className="ready-route">{t.routeKicker} <ArrowLeft size={14} /></span></div><h2>{t.readyTitle}</h2><p>{t.readyBody}</p><div className="ready-actions"><button className="primary-action primary-action--dark" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={17} /></button><a className="secondary-action secondary-action--dark" href={sitePath("/services")}>{t.browse}<ArrowDownRight size={16} /></a></div></div>        </section>
+        <section className="ready-section" data-reveal><div className="page-width ready-inner"><div className="section-route-label section-route-label--ready"><span className="route-node-dot" />04 / {isArabic ? "الخطوة التالية" : "ARRIVAL CHECKPOINT"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="ready-kicker"><span className="section-kicker">05 / NEXT</span><span className="ready-route">{t.routeKicker} <ArrowLeft size={14} /></span></div><h2>{t.readyTitle}</h2><p>{t.readyBody}</p><div className="ready-actions"><button className="primary-action primary-action--dark" type="button" onClick={openIntake}>{t.start}<DirectionArrow size={17} /></button><a className="secondary-action secondary-action--dark" href={sitePath("/services")}>{t.browse}<ArrowDownRight size={16} /></a></div></div>        </section>
       </main>
 
       {menuOpen && <button className="mobile-menu-backdrop" type="button" aria-label={isArabic ? "إغلاق القائمة" : "Close menu"} onClick={closeMenu} />}
