@@ -16,21 +16,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Scale, LogOut, User as UserIcon, ChevronDown, Globe, Bell, Shield, Menu, Home, Briefcase, FileText, Gavel, Bell as BellIcon } from "lucide-react";
+import { Scale, LogOut, User as UserIcon, ChevronDown, Globe, Bell, Shield, Home, Briefcase, FileText, Gavel, Bell as BellIcon } from "lucide-react";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { user, loading, signOut } = useSession();
   const { locale, setLocale, t } = useLocale();
   const [unread, setUnread] = useState(0);
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!user) { setUnread(0); return; }
@@ -63,40 +55,6 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between gap-2 px-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-6">
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="md:hidden p-2" aria-label="Menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side={locale === "ar" ? "right" : "left"} className="w-72">
-              <SheetHeader>
-                <SheetTitle className={locale === "ar" ? "text-right" : "text-left"}>
-                  {locale === "ar" ? "القائمة" : "Menu"}
-                </SheetTitle>
-              </SheetHeader>
-              <nav className="mt-4 flex flex-col gap-1">
-                {navLinks.map((l) => {
-                  const Icon = l.icon;
-                  return (
-                    <Link
-                      key={l.href}
-                      href={l.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="flex-1">{l.label}</span>
-                      {l.href === "/notifications" && unread > 0 && (
-                        <Badge variant="destructive" className="text-[10px]">{unread}</Badge>
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </SheetContent>
-          </Sheet>
-
           <Link href="/" className="flex min-w-0 items-center gap-2">
             <div className="relative h-12 w-[170px] flex-shrink-0 sm:h-14 sm:w-[184px]">
               <Image src="/expat-legal-services-logo.png" alt="خدمات المغتربين القانونية" fill sizes="(max-width: 640px) 170px, 184px" className="object-contain object-center" priority />

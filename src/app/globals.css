@@ -1969,3 +1969,21 @@ body.landing-active > footer {
 @media (prefers-reduced-motion: reduce) {
   .clarity-headline span, .clarity-headline em, .clarity-headline::after, .clarity-alert { animation: none; opacity: 1; transform: none; max-width: none; }
 }
+
+/* Start the clarity sequence when the section is actually reached, especially on mobile. */
+.clarity-section:not(.is-visible) .clarity-headline span,
+.clarity-section:not(.is-visible) .clarity-headline em,
+.clarity-section:not(.is-visible) .clarity-headline::after,
+.clarity-section:not(.is-visible) .clarity-findings > div,
+.clarity-section:not(.is-visible) .clarity-insight,
+.clarity-section:not(.is-visible) .clarity-alert,
+.clarity-section:not(.is-visible) .clarity-scan-line,
+.clarity-section:not(.is-visible) .clarity-status { animation-play-state: paused; }
+.clarity-section.is-visible .clarity-headline span,
+.clarity-section.is-visible .clarity-headline em,
+.clarity-section.is-visible .clarity-headline::after,
+.clarity-section.is-visible .clarity-findings > div,
+.clarity-section.is-visible .clarity-insight,
+.clarity-section.is-visible .clarity-alert,
+.clarity-section.is-visible .clarity-scan-line,
+.clarity-section.is-visible .clarity-status { animation-play-state: running; }
