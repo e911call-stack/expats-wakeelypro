@@ -298,13 +298,6 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
       </header>
 
       <main>
-        <section className="catalog-section catalog-section--top" id="services" data-reveal>
-          <div className="page-width catalog-grid">
-            <div className="catalog-image"><img src={servicesAsset} alt={isArabic ? "مستندات وملف خدمة قانونية" : "Documents and a legal service file"} /><div className="catalog-image-caption"><span>{t.servicesKicker}</span><span>03 / 04</span></div><div className="catalog-stamp">J</div><div className="image-evidence-tag">CASE / 02 <span>JRD — SERVICE FILE</span></div></div>
-            <div className="catalog-copy"><span className="section-kicker">{t.servicesKicker}</span><h2>{t.servicesTitle}</h2><p>{t.servicesBody}</p><div className="catalog-notes"><div><span>01</span><strong>{isArabic ? "إجراء رسمي" : "Formal procedure"}</strong></div><div><span>02</span><strong>{isArabic ? "قائمة مستندات" : "Document list"}</strong></div><div><span>03</span><strong>{isArabic ? "مصادر حكومية" : "Government sources"}</strong></div></div><a className="text-action" href={sitePath("/services")}>{t.viewAll}<DirectionArrow size={16} /></a></div>
-          </div>
-        </section>
-
         <section className="wakeely-hero">
           <div className="page-width hero-layout">
             <div className="hero-copy">
@@ -359,6 +352,12 @@ export default function Home({ initialLanguage }: { initialLanguage?: Language }
           </div>
         </section>
 
+        <section className="catalog-section" id="services" data-reveal>
+          <div className="page-width catalog-grid">
+            <div className="catalog-image"><img src={servicesAsset} alt={isArabic ? "مستندات وملف خدمة قانونية" : "Documents and a legal service file"} /><div className="catalog-image-caption"><span>{t.servicesKicker}</span><span>03 / 04</span></div><div className="catalog-stamp">J</div><div className="image-evidence-tag">CASE / 02 <span>JRD — SERVICE FILE</span></div></div>
+            <div className="catalog-copy"><span className="section-kicker">{t.servicesKicker}</span><h2>{t.servicesTitle}</h2><p>{t.servicesBody}</p><div className="catalog-notes"><div><span>01</span><strong>{isArabic ? "إجراء رسمي" : "Formal procedure"}</strong></div><div><span>02</span><strong>{isArabic ? "قائمة مستندات" : "Document list"}</strong></div><div><span>03</span><strong>{isArabic ? "مصادر حكومية" : "Government sources"}</strong></div></div><a className="text-action" href={sitePath("/services")}>{t.viewAll}<DirectionArrow size={16} /></a></div>
+          </div>
+        </section>
 
         <section className="trust-section" data-reveal>
           <div className="page-width"><div className="section-route-label section-route-label--light"><span className="route-node-dot" />04 / {isArabic ? "لماذا نحن" : "TRUST FILE"}<span className="route-line" /><ArrowDownRight size={14} /></div><div className="trust-layout"><div className="trust-heading"><span className="section-kicker section-kicker--light">{t.whyKicker}</span><h2>{t.whyTitle}</h2><p>{t.whyBody}</p></div><div className="trust-items"><div className="trust-item"><span>01</span><div><h3>{t.noInvent}</h3><p>{t.noInventBody}</p></div><Check size={17} /></div><div className="trust-item"><span>02</span><div><h3>{t.eligibility}</h3><p>{t.eligibilityBody}</p></div><Check size={17} /></div><div className="trust-item"><span>03</span><div><h3>{t.fees}</h3><p>{t.feesBody}</p></div><Check size={17} /></div><div className="trust-item"><span>04</span><div><h3>{t.language}</h3><p>{t.languageBody}</p></div><Check size={17} /></div></div></div></div>

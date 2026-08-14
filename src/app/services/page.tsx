@@ -75,11 +75,36 @@ const REMOTE_TONES: Record<string, "success" | "warning" | "danger" | "secondary
   fully_remote: "success", partially_remote: "warning", in_person_required: "danger", unknown: "secondary",
 };
 
+const PRIMARY_SERVICE_ORDER = [
+  "property-sale-from-abroad",
+  "power-of-attorney",
+  "inheritance-initiation",
+  "civil-status-update",
+  "company-formation",
+  "court-representation",
+  "document-authentication",
+];
+
+function orderServices(services: Service[]) {
+  const rank = new Map(PRIMARY_SERVICE_ORDER.map((slug, index) => [slug, index]));
+  return [...services].sort((left, right) => {
+    const leftRank = rank.get(left.slug);
+    const rightRank = rank.get(right.slug);
+    if (leftRank !== undefined && rightRank !== undefined) return leftRank - rightRank;
+    if (leftRank !== undefined) return -1;
+    if (rightRank !== undefined) return 1;
+    return Number(right.isFeatured) - Number(left.isFeatured) || left.nameEn.localeCompare(right.nameEn);
+  });
+}
+
 export default function ServicesPage() {
   const { locale } = useLocale();
   const ar = locale === "ar";
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const orderedServices = orderServices(services);
+  const primaryServices = orderedServices.slice(0, Math.min(7, orderedServices.length));
+  const additionalServices = orderedServices.slice(7);
 
   useEffect(() => {
     fetch("/api/legal/services").then((r) => r.json()).then((d) => setServices(d.services ?? [])).catch(() => setServices([])).finally(() => setLoading(false));
@@ -88,22 +113,29 @@ export default function ServicesPage() {
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
       <LegalNotice className="mb-6" />
-      <section className="mb-12">
-        <Badge variant="secondary" className="mb-3">{ar ? "الخطوة الأولى" : "Part one"}</Badge>
-        <h1 className="text-3xl font-bold sm:text-4xl">{ar ? "ماذا تريد أن تنجز في الأردن؟" : "What do you want to accomplish in Jordan?"}</h1>
+      <section id="catalog" className="mb-12">
+        <div className="mb-8">
+          <Badge variant="secondary" className="mb-2">{ar ? "كتالوج الخدمات الموثقة" : "Verified service catalog"}</Badge>
+          <h1 className="text-3xl font-bold sm:text-4xl">{ar ? "الخدمات القانونية الأردنية" : "Jordanian legal services"}</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{ar ? "كل خدمة لها إجراء رسمي صريح، قائمة مستندات، ومصادر حكومية. الذكاء الاصطناعي لا يخترع خدمات خارج هذا الكتالوج." : "Each service has an explicit official procedure, document checklist, and government sources. The AI does not invent services outside this catalog."}</p>
+        </div>
+        {loading ? <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div> : <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{primaryServices.map((s) => <ServiceCard key={s.id} service={s} ar={ar} />)}</div>
+          {additionalServices.length > 0 && <div className="mt-14 border-t border-border pt-10">
+            <Badge variant="secondary" className="mb-3">{ar ? "خدمات إضافية" : "Additional services"}</Badge>
+            <h2 className="mb-6 text-xl font-bold">{ar ? "المزيد من الخدمات والإجراءات" : "More services and procedures"}</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{additionalServices.map((s) => <ServiceCard key={s.id} service={s} ar={ar} />)}</div>
+          </div>}
+        </>}
+      </section>
+
+      <section>
+        <Badge variant="secondary" className="mb-3">{ar ? "الخطوة التالية" : "Next step"}</Badge>
+        <h2 className="text-2xl font-bold sm:text-3xl">{ar ? "ماذا تريد أن تنجز في الأردن؟" : "What do you want to accomplish in Jordan?"}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">{ar ? "اختر المجال ثم الإجراء الأقرب لاحتياجك. سينقلك كل خيار إلى نموذج استقبال لجمع بياناتك الأساسية وفهم طلبك قبل ربطه بالخدمة المناسبة." : "Choose a category and the procedure closest to your need. Each choice opens an intake form to collect your basic details and understand your request before matching it to the right service."}</p>
         <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {CATEGORIES.map((category) => <CategoryCard key={category.en} category={category} ar={ar} />)}
         </div>
-      </section>
-
-      <section id="catalog">
-        <div className="mb-8">
-          <Badge variant="secondary" className="mb-2">{ar ? "كتالوج الخدمات الموثقة" : "Verified service catalog"}</Badge>
-          <h2 className="text-2xl font-bold sm:text-3xl">{ar ? "الخدمات القانونية الأردنية" : "Jordanian legal services"}</h2>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{ar ? "كل خدمة لها إجراء رسمي صريح، قائمة مستندات، ومصادر حكومية. الذكاء الاصطناعي لا يخترع خدمات خارج هذا الكتالوج." : "Each service has an explicit official procedure, document checklist, and government sources. The AI does not invent services outside this catalog."}</p>
-        </div>
-        {loading ? <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div> : <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{services.map((s) => <ServiceCard key={s.id} service={s} ar={ar} />)}</div>}
       </section>
     </div>
   );
