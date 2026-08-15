@@ -16,7 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Scale, LogOut, User as UserIcon, ChevronDown, Globe, Bell, Shield, Home, Briefcase, FileText, Gavel, Bell as BellIcon } from "lucide-react";
+import { Scale, LogOut, User as UserIcon, ChevronDown, Globe, Bell, Shield, Home, Briefcase, FileText, Gavel, Bell as BellIcon, BookOpen } from "lucide-react";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -45,6 +45,7 @@ export function SiteHeader() {
   const navLinks = [
     { href: "/", label: t("nav.home"), icon: Home },
     { href: "/services", label: t("nav.services"), icon: Briefcase },
+    { href: "/easy-law", label: locale === "ar" ? "افهم القانون" : "Easy Law", icon: BookOpen },
     { href: "/matters", label: t("nav.matters"), icon: FileText },
     ...(user?.role === "LAWYER" ? [{ href: "/lawyer", label: t("nav.lawyer"), icon: Gavel }] : []),
     ...(user?.role === "ADMIN" ? [{ href: "/admin", label: locale === "ar" ? "لوحة الإدارة" : "Admin", icon: Shield }] : []),
