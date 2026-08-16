@@ -50,3 +50,14 @@ tsconfig.tsbuildinfo
 # Build artifacts
 bun.lock
 next-env.d.ts
+
+# Bloat files that should NOT be in the repo
+skills/
+tool-results/
+
+# Accidental commits
+v
+
+# Testing
+playwright-report/
+test-results/
